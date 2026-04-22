@@ -6,6 +6,8 @@
 <title>WUPHF</title>
 
 <style>
+
+/* ===== THEMES ===== */
 body.light {
   margin:0;
   font-family:Tahoma;
@@ -19,23 +21,24 @@ body.dark {
   color:white;
 }
 
-body.cool {
+body.dynamic {
   margin:0;
   font-family:Tahoma;
-  background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+  background:linear-gradient(135deg,#141e30,#243b55);
   color:white;
 }
 
+/* ===== TOP BAR ===== */
 .topbar {
   background:#3b5998;
   color:white;
   padding:12px 18px;
   font-size:22px;
   font-weight:bold;
+  cursor:pointer;
   display:flex;
   justify-content:space-between;
   align-items:center;
-  cursor:pointer;
 }
 
 #logoutBtn {
@@ -47,6 +50,7 @@ body.cool {
   cursor:pointer;
 }
 
+/* ===== LAYOUT ===== */
 .screen { display:none; }
 
 .center {
@@ -73,26 +77,32 @@ body.cool {
 }
 
 body.dark .card,
-body.cool .card {
+body.dynamic .card {
   background:#2a2a2a;
 }
 
+/* ===== INPUT FIX (NO RESIZE BUG) ===== */
 input, textarea {
   width:100%;
   padding:8px;
   margin:6px 0;
   border:1px solid #ccc;
   border-radius:3px;
+  box-sizing:border-box;
+  resize:none;
 }
 
+/* ===== BUTTONS (RESTORED NORMAL LOOK) ===== */
 button {
-  padding:6px;
+  padding:6px 10px;
   background:#3b5998;
   color:white;
   border:none;
   cursor:pointer;
+  width:auto;
 }
 
+/* ===== POSTS ===== */
 .post {
   border-top:1px solid #ddd;
   padding:10px 0;
@@ -101,27 +111,31 @@ button {
 
 .user-row {
   display:flex;
-  justify-content:space-between;
   align-items:center;
+  gap:10px;
 }
 
 .user {
-  color:#3b5998;
   font-weight:bold;
+  color:#3b5998;
   cursor:pointer;
 }
 
+/* follow beside name */
 .follow-btn {
   width:auto;
   font-size:11px;
+  padding:3px 6px;
 }
 
+/* like button */
 .like-btn {
   width:auto;
-  font-size:11px;
-  margin-top:5px;
+  font-size:12px;
+  margin-top:6px;
 }
 
+/* delete restored */
 .delete {
   position:absolute;
   bottom:5px;
@@ -131,22 +145,49 @@ button {
   cursor:pointer;
 }
 
+/* ===== PROFILE ===== */
 .profile-pic {
   width:90px;
   height:90px;
-  border-radius:6px;
   object-fit:cover;
+  border-radius:6px;
 }
 
+/* bold names fix */
+.profile-name {
+  font-weight:bold;
+}
+
+/* verified symbol */
 .verified {
   font-weight:bold;
   color:#f5c542;
 }
+
+/* ===== SETTINGS PAGE ===== */
+.settings-page {
+  display:none;
+  max-width:600px;
+  margin:40px auto;
+}
+
+.settings-card {
+  background:white;
+  padding:15px;
+  border-radius:6px;
+}
+
+body.dark .settings-card,
+body.dynamic .settings-card {
+  background:#2a2a2a;
+}
+
 </style>
 </head>
 
 <body class="light">
 
+<!-- TOP BAR -->
 <div class="topbar" onclick="goHome()">
   WUPHF
   <button id="logoutBtn" onclick="logout()">Logout</button>
@@ -178,6 +219,23 @@ button {
   <button onclick="createAccount()">Create</button>
 </div>
 
+<!-- SETTINGS PAGE (FULL SCREEN STYLE) -->
+<div id="settingsPage" class="settings-page">
+  <div class="settings-card">
+    <h2>Settings</h2>
+
+    <h3>Themes</h3>
+    <button onclick="setTheme('light')">Light</button>
+    <button onclick="setTheme('dark')">Dark</button>
+    <button onclick="setTheme('dynamic')">Dynamic</button>
+
+    <br><br>
+    <p>More settings coming soon.</p>
+
+    <button onclick="exitSettings()">Back</button>
+  </div>
+</div>
+
 <!-- APP -->
 <div id="app" class="screen">
 <div class="container">
@@ -185,14 +243,10 @@ button {
   <div class="sidebar card">
     <button onclick="showTab('feed')">Feed</button>
     <button onclick="showTab('messages')">Messages</button>
-    <button onclick="toggleSettings()">Settings</button>
-    <div id="settings" style="display:none;">
-      <button onclick="setTheme('light')">Light</button>
-      <button onclick="setTheme('dark')">Dark</button>
-      <button onclick="setTheme('cool')">Cool</button>
-    </div>
+    <button onclick="openSettings()">Settings</button>
   </div>
 
+  <!-- FEED -->
   <div id="feed" class="feed card">
     <h3>Feed</h3>
     <textarea id="postText"></textarea>
@@ -200,6 +254,7 @@ button {
     <div id="posts"></div>
   </div>
 
+  <!-- MESSAGES -->
   <div id="messages" class="feed card" style="display:none;">
     <h3>Messages</h3>
     <input id="msgUser">
@@ -209,6 +264,7 @@ button {
     <div id="chatBox"></div>
   </div>
 
+  <!-- PROFILE -->
   <div id="profile" class="profile card">
     <h3>Profile</h3>
 
@@ -236,10 +292,15 @@ function setTheme(t){
   localStorage.setItem("theme",t);
 }
 
-/* SETTINGS */
-function toggleSettings(){
-  let s=document.getElementById("settings");
-  s.style.display=s.style.display==="block"?"none":"block";
+/* SETTINGS PAGE */
+function openSettings(){
+  document.getElementById("app").style.display="none";
+  document.getElementById("settingsPage").style.display="block";
+}
+
+function exitSettings(){
+  document.getElementById("settingsPage").style.display="none";
+  document.getElementById("app").style.display="block";
 }
 
 /* NAV */
@@ -280,16 +341,16 @@ function getUsers(){
 }
 function saveUsers(u){ localStorage.setItem("users",JSON.stringify(u)); }
 
-/* LOGIN */
+/* LOGIN FIX */
 function login(){
+  let users=getUsers();
   let u=loginUser.value;
   let p=loginPass.value;
-  let users=getUsers();
 
   loginError.innerText="";
 
-  if(!users[u]) return loginError.innerText="Wrong username";
-  if(users[u].password!==p) return loginError.innerText="Wrong password";
+  if(!users[u]) return loginError.innerText="Incorrect username";
+  if(users[u].password!==p) return loginError.innerText="Incorrect password";
 
   currentUser=u;
   showScreen("app");
@@ -298,9 +359,9 @@ function login(){
 
 /* SIGNUP */
 function createAccount(){
+  let users=getUsers();
   let u=signupUser.value;
   let p=signupPass.value;
-  let users=getUsers();
 
   if(users[u]) return signupError.innerText="Exists";
 
@@ -336,7 +397,7 @@ function loadFeed(){
 
   all.forEach(p=>{
 
-    let verified = users[p.user].verified ? `<span class="verified">◆</span>` : "";
+    let verified = users[p.user].verified ? "◆" : "";
 
     let isFollowing = users[currentUser].following.includes(p.user);
 
@@ -346,30 +407,26 @@ function loadFeed(){
     div.innerHTML=`
       <div class="user-row">
         <div class="user" onclick="openProfile('${p.user}')">
-          @${p.user} ${verified}
+          ${p.user} ${verified}
         </div>
 
-        <div>
-          <button class="follow-btn" onclick="toggleFollow('${p.user}')">
-            ${isFollowing?"Unfollow":"Follow"}
-          </button>
-        </div>
+        <button class="follow-btn" onclick="toggleFollow('${p.user}')">
+          ${isFollowing?"Unfollow":"Follow"}
+        </button>
       </div>
 
       <div>${p.text}</div>
 
-      <button class="like-btn" onclick="likePost(${p.id})">
-        ▲ ${p.likes}
-      </button>
+      <button class="like-btn" onclick="likePost(${p.id})">▲ ${p.likes}</button>
 
-      ${p.user===currentUser?`<div class="delete" onclick="deletePost(${p.id})">x</div>`:""}
+      ${p.user===currentUser?`<div class="delete" onclick="deletePost(${p.id})">delete</div>`:""}
     `;
 
     posts.appendChild(div);
   });
 }
 
-/* LIKE */
+/* LIKE FIX */
 function likePost(id){
   let users=getUsers();
 
@@ -410,11 +467,9 @@ function loadProfile(){
   let users=getUsers();
   let u=users[viewingUser||currentUser];
 
-  if(!u) return;
-
   profilePic.src=u.pic;
 
-  profileName.innerHTML=`@${viewingUser||currentUser} ${u.verified?"◆":""}`;
+  profileName.innerHTML=`<b>${viewingUser||currentUser}</b> ${u.verified?"◆":""}`;
   profileFollowers.innerText="Followers: "+u.followers.length;
 
   followArea.innerHTML="";
@@ -440,6 +495,7 @@ function refreshProfile(){ loadProfile(); }
 function openProfile(u){ viewingUser=u; loadProfile(); }
 function logout(){ currentUser=null; showScreen("welcome"); }
 
+/* LOAD THEME */
 (function(){
   document.body.className=localStorage.getItem("theme")||"light";
 })();
