@@ -49,21 +49,15 @@ body.dynamic {
 }
 
 /* LAYOUT */
-.screen { display:none; }
-
 .container {
   display:flex;
-  max-width:1400px;
+  max-width:1200px;
   margin:20px auto;
   gap:10px;
 }
 
-/* FEED */
-.feed {
-  flex:1;
-}
+.feed { flex:1; }
 
-/* PROFILE */
 .profile {
   width:260px;
 }
@@ -80,7 +74,7 @@ body.dynamic .card {
   background:#2a2a2a;
 }
 
-/* INPUTS */
+/* INPUT */
 input, textarea {
   width:100%;
   padding:8px;
@@ -96,20 +90,12 @@ input, textarea {
   position:relative;
 }
 
-.user-row {
-  display:flex;
-  justify-content:flex-start;
-  align-items:center;
-  gap:10px;
-}
-
 .user {
-  font-weight:bold; /* FIXED AGAIN */
+  font-weight:bold;
   color:#3b5998;
-  cursor:pointer;
 }
 
-/* BLUE BUTTONS RESTORED */
+/* BUTTONS */
 button {
   background:#3b5998;
   color:white;
@@ -119,19 +105,13 @@ button {
   width:auto;
 }
 
-/* LIKE */
-.like-btn {
-  margin-top:6px;
-  width:auto;
-}
-
-/* DELETE */
+/* DELETE (RESTORED) */
 .delete {
   position:absolute;
   bottom:5px;
   right:5px;
-  color:red;
   font-size:11px;
+  color:red;
   cursor:pointer;
 }
 
@@ -148,13 +128,10 @@ button {
   font-weight:bold;
 }
 
-/* LOGIN SCREEN */
-.login-box {
+/* LOGIN */
+#loginScreen {
   max-width:400px;
   margin:80px auto;
-  background:white;
-  padding:15px;
-  border-radius:4px;
 }
 
 </style>
@@ -162,24 +139,21 @@ button {
 
 <body class="light">
 
-<!-- TOP BAR (FIXED NAV ALWAYS WORKS) -->
+<!-- TOP BAR -->
 <div class="topbar">
   <div onclick="goHome()" style="cursor:pointer;">WUPHF</div>
 
   <div class="nav">
     <button onclick="showFeed()">Feed</button>
-    <button onclick="showMessages()">Messages</button>
     <button onclick="openSettings()">Settings</button>
     <button onclick="logout()">Logout</button>
   </div>
 </div>
 
 <!-- LOGIN -->
-<div id="loginScreen" class="login-box screen" style="display:block;">
+<div id="loginScreen" class="card">
   <h2>just WUPHF it.</h2>
   <p>whenever. wherever.</p>
-
-  <h3>Create Account / Login</h3>
 
   <input id="user">
   <input id="pass" type="password">
@@ -191,7 +165,7 @@ button {
 </div>
 
 <!-- SETTINGS -->
-<div id="settingsScreen" class="screen card" style="max-width:500px; margin:40px auto;">
+<div id="settingsScreen" class="card" style="display:none; max-width:500px; margin:40px auto;">
   <h2>Settings</h2>
 
   <h3>Themes</h3>
@@ -201,12 +175,12 @@ button {
 </div>
 
 <!-- APP -->
-<div id="app" class="screen">
+<div id="app" style="display:none;">
 
 <div class="container">
 
   <!-- FEED -->
-  <div id="feed" class="feed card">
+  <div class="feed card">
     <h3>Feed</h3>
 
     <textarea id="postText"></textarea>
@@ -221,7 +195,6 @@ button {
 
     <img id="profilePic" class="profile-pic">
     <input type="file" onchange="updatePic(event)">
-    <button onclick="refreshProfile()">Update Profile</button>
 
     <p id="profileName"></p>
     <p id="profileFollowers"></p>
@@ -229,48 +202,30 @@ button {
 
 </div>
 
-<!-- MESSAGES -->
-<div id="messages" class="screen card" style="max-width:900px; margin:20px auto;">
-  <h3>Messages</h3>
-
-  <input id="msgTo" placeholder="user">
-  <textarea id="msgText"></textarea>
-  <button onclick="sendMessage()">Send</button>
-
-  <div id="msgList"></div>
-  <div id="chat"></div>
-</div>
-
 </div>
 
 <script>
 
 let currentUser=null;
-let viewingUser=null;
-let likedMap={};
 
-/* NAV FIXED */
+/* NAV */
+function goHome(){
+  if(currentUser){
+    document.getElementById("app").style.display="block";
+    document.getElementById("settingsScreen").style.display="none";
+    loadFeed();
+  }
+}
+
 function showFeed(){
   if(!currentUser) return;
+  document.getElementById("loginScreen").style.display="none";
   document.getElementById("settingsScreen").style.display="none";
-  document.getElementById("messages").style.display="none";
   document.getElementById("app").style.display="block";
-  document.getElementById("feed").style.display="block";
   loadFeed();
 }
 
-function showMessages(){
-  if(!currentUser) return;
-  document.getElementById("app").style.display="none";
-  document.getElementById("messages").style.display="block";
-}
-
-/* HOME ALWAYS WORKS */
-function goHome(){
-  showFeed();
-}
-
-/* SETTINGS */
+/* SETTINGS FIX */
 function openSettings(){
   document.getElementById("app").style.display="none";
   document.getElementById("settingsScreen").style.display="block";
@@ -280,31 +235,33 @@ function setTheme(t){
   document.body.className=t;
 }
 
-/* LOGIN */
+/* LOGIN FIX */
 function login(){
   currentUser=user.value;
-  document.getElementById("loginScreen").style.display="none";
-  document.getElementById("app").style.display="block";
-  showFeed();
-}
 
-/* CREATE */
-function createAccount(){
-  currentUser=user.value;
   document.getElementById("loginScreen").style.display="none";
   document.getElementById("app").style.display="block";
+
+  loadFeed();
+  loadProfile();
 }
 
 /* POSTS */
 function addPost(){
   let users=getUsers();
+
+  if(!users[currentUser]){
+    users[currentUser]={posts:[],followers:[],pic:"empty.jpg"};
+  }
+
   users[currentUser].posts.unshift({
     id:Date.now(),
     user:currentUser,
     text:postText.value,
-    likes:0,
-    time:new Date().toLocaleString()
+    time:new Date().toLocaleString(),
+    likes:0
   });
+
   saveUsers(users);
   loadFeed();
 }
@@ -315,7 +272,10 @@ function loadFeed(){
   posts.innerHTML="";
 
   let all=[];
-  Object.values(users).forEach(u=>all.push(...u.posts));
+  Object.values(users).forEach(u=>{
+    if(u.posts) all.push(...u.posts);
+  });
+
   all.sort((a,b)=>b.id-a.id);
 
   all.forEach(p=>{
@@ -324,15 +284,11 @@ function loadFeed(){
     div.className="post";
 
     div.innerHTML=`
-      <div class="user-row">
-        <div class="user">@${p.user}</div>
-        <button>Follow</button>
-      </div>
-
+      <div class="user">@${p.user}</div>
       <div>${p.text}</div>
-      <div style="font-size:11px">${p.time}</div>
+      <div style="font-size:11px;color:gray;">${p.time}</div>
 
-      <button class="like-btn" onclick="like(${p.id})">▲ ${p.likes}</button>
+      <button onclick="like(${p.id})">▲ ${p.likes}</button>
 
       ${p.user===currentUser?`<div class="delete" onclick="del(${p.id})">delete</div>`:""}
     `;
@@ -341,16 +297,12 @@ function loadFeed(){
   });
 }
 
-/* LIKE FIX */
+/* LIKE */
 function like(id){
-  if(!likedMap[currentUser]) likedMap[currentUser]={};
-  if(likedMap[currentUser][id]) return;
-
-  likedMap[currentUser][id]=true;
-
   let users=getUsers();
+
   Object.values(users).forEach(u=>{
-    u.posts.forEach(p=>{
+    (u.posts||[]).forEach(p=>{
       if(p.id===id) p.likes++;
     });
   });
@@ -359,7 +311,7 @@ function like(id){
   loadFeed();
 }
 
-/* DELETE FIX */
+/* DELETE FIXED */
 function del(id){
   let users=getUsers();
   users[currentUser].posts=users[currentUser].posts.filter(p=>p.id!==id);
@@ -367,21 +319,48 @@ function del(id){
   loadFeed();
 }
 
-/* PROFILE */
+/* PROFILE FIXED */
 function loadProfile(){
   let users=getUsers();
-  let u=users[currentUser];
+  let u=users[currentUser]||{followers:[],pic:"empty.jpg"};
 
+  profilePic.src=u.pic;
   profileName.innerHTML=`<b>@${currentUser}</b>`;
-  profileFollowers.innerText="Followers: "+u.followers.length;
+  profileFollowers.innerText="Followers: "+(u.followers?.length||0);
+}
+
+/* PROFILE PIC FIX (THIS WAS YOUR BIG BUG) */
+function updatePic(e){
+  let file=e.target.files[0];
+  if(!file) return;
+
+  let r=new FileReader();
+
+  r.onload=()=>{
+    let users=getUsers();
+    if(!users[currentUser]) users[currentUser]={followers:[],posts:[]};
+
+    users[currentUser].pic=r.result;
+    saveUsers(users);
+    loadProfile();
+  };
+
+  r.readAsDataURL(file);
 }
 
 /* STORAGE */
 function getUsers(){
   return JSON.parse(localStorage.getItem("users")||"{}");
 }
+
 function saveUsers(u){
   localStorage.setItem("users",JSON.stringify(u));
+}
+
+function createAccount(){
+  let users=getUsers();
+  users[user.value]={posts:[],followers:[],pic:"empty.jpg"};
+  saveUsers(users);
 }
 
 function logout(){
