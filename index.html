@@ -12,38 +12,63 @@ body {
   background:linear-gradient(#dfe7f3,#f5f6f7);
 }
 
+/* TOP BAR */
 .topbar {
   background:#3b5998;
   color:white;
   padding:12px 18px;
-  font-weight:bold;
   font-size:22px;
+  font-weight:bold;
   cursor:pointer;
 }
 
+/* LAYOUT */
 .container {
-  max-width:1100px;
+  max-width:1050px;
   margin:20px auto;
   display:none;
+  display:flex;
+  gap:10px;
 }
 
-.sidebar { width:160px; float:left; }
-.feed { width:600px; float:left; margin-left:10px; }
-.profile { width:260px; float:right; }
+/* SIDEBAR */
+.sidebar {
+  width:150px;
+}
 
+/* FEED */
+.feed {
+  width:580px;
+}
+
+/* PROFILE RIGHT */
+.profile {
+  width:250px;
+}
+
+/* CARD */
 .card {
   background:white;
-  padding:15px;
+  padding:12px;
   border-radius:4px;
   margin-bottom:10px;
+  box-shadow:0 1px 2px rgba(0,0,0,0.06);
 }
 
+/* INPUTS FIXED */
 input, textarea, button {
   width:100%;
-  padding:10px;
-  margin:5px 0;
+  padding:8px;
+  margin:6px 0;
   border:1px solid #ccc;
   border-radius:3px;
+  box-sizing:border-box;
+  font-family:Tahoma;
+}
+
+textarea {
+  resize:none;
+  height:70px;
 }
 
 button {
@@ -53,19 +78,30 @@ button {
   cursor:pointer;
 }
 
-.user {
-  color:#3b5998;
-  font-weight:bold;
-  cursor:pointer;
-}
-
+/* POSTS */
 .post {
   border-top:1px solid #eee;
   padding:10px 0;
   position:relative;
 }
 
-.upvote { cursor:pointer; font-size:12px; }
+.user {
+  color:#3b5998;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.follow-btn {
+  font-size:11px;
+  padding:3px 6px;
+  width:auto;
+  margin-left:6px;
+}
+
+.upvote {
+  cursor:pointer;
+  font-size:12px;
+}
 
 .delete {
   position:absolute;
@@ -76,22 +112,24 @@ button {
   cursor:pointer;
 }
 
-.follow-btn {
+.small {
   font-size:11px;
-  padding:3px 6px;
-  width:auto;
+  color:#777;
 }
 
-.verified {
-  width:14px;
-  vertical-align:middle;
-}
-
+/* PROFILE PIC */
 .profile-pic {
   width:90px;
   height:90px;
-  border-radius:6px;
   object-fit:cover;
+  border-radius:6px;
+  border:2px solid #999;
+}
+
+/* VERIFIED */
+.verified {
+  width:14px;
+  vertical-align:middle;
 }
 </style>
 </head>
@@ -112,10 +150,13 @@ button {
 <!-- APP -->
 <div class="container" id="app">
 
-  <div class="sidebar card">
-    <button onclick="showTab('feed')">Feed</button>
-    <button onclick="showTab('messages')">Messages</button>
-    <button onclick="logout()">Logout</button>
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="card">
+      <button onclick="showTab('feed')">Feed</button>
+      <button onclick="showTab('messages')">Messages</button>
+      <button onclick="logout()">Logout</button>
+    </div>
   </div>
 
   <!-- FEED -->
@@ -141,7 +182,7 @@ button {
   <div id="profile" class="profile card">
     <h3>Profile</h3>
 
-    <img id="profilePic" class="profile-pic">
+    <img id="profilePic" class="profile-pic" src="empty.jpg">
 
     <input type="file" id="profileUpload">
     <button onclick="updateProfile()">Update</button>
@@ -153,28 +194,26 @@ button {
 </div>
 
 <script>
-let currentUser = null;
-let viewingUser = null;
+let currentUser=null;
+let viewingUser=null;
 
-/* STORAGE SAFE LOAD */
-function getUsers() {
-  return JSON.parse(localStorage.getItem("users") || "{}");
+function getUsers(){
+  return JSON.parse(localStorage.getItem("users")||"{}");
 }
-
-function saveUsers(u) {
-  localStorage.setItem("users", JSON.stringify(u));
+function saveUsers(u){
+  localStorage.setItem("users",JSON.stringify(u));
 }
 
 /* LOGIN */
-function login() {
-  let users = getUsers();
-  let u = username.value;
-  let p = password.value;
+function login(){
+  let users=getUsers();
+  let u=username.value;
+  let p=password.value;
 
-  loginError.innerText = "";
+  loginError.innerText="";
 
-  if (!users[u]) {
-    users[u] = {
+  if(!users[u]){
+    users[u]={
       password:p,
       pic:"empty.jpg",
       posts:[],
@@ -184,32 +223,39 @@ function login() {
     };
   }
 
-  if (users[u].password !== p) {
-    loginError.innerText = "Password incorrect";
+  if(users[u].password!==p){
+    loginError.innerText="Password incorrect";
     return;
   }
 
-  currentUser = u;
+  currentUser=u;
 
   loginBox.style.display="none";
-  app.style.display="block";
+  app.style.display="flex";
 
   showTab("feed");
   loadFeed();
   loadProfile();
 }
 
-/* NAV FIX */
-function showTab(tab) {
+/* NAV */
+function showTab(tab){
   feed.style.display = tab==="feed"?"block":"none";
   messages.style.display = tab==="messages"?"block":"none";
 }
 
-/* HOME */
-function goHome() {
+function goHome(){
   viewingUser=null;
   loadProfile();
   showTab("feed");
+}
+
+/* LOGOUT FIX */
+function logout(){
+  currentUser=null;
+  viewingUser=null;
+  app.style.display="none";
+  loginBox.style.display="block";
 }
 
 /* VERIFIED */
@@ -218,7 +264,7 @@ function isVerified(user){
   return (users[user]?.followers?.length||0)>=100;
 }
 
-/* FOLLOW */
+/* FOLLOW FIX */
 function toggleFollow(user){
   let users=getUsers();
 
@@ -231,6 +277,7 @@ function toggleFollow(user){
   } else {
     users[currentUser].following =
       users[currentUser].following.filter(x=>x!==user);
+
     users[user].followers =
       users[user].followers.filter(x=>x!==currentUser);
   }
@@ -238,6 +285,25 @@ function toggleFollow(user){
   saveUsers(users);
   loadFeed();
   loadProfile();
+}
+
+/* PROFILE */
+function openProfile(user){
+  viewingUser=user;
+  loadProfile();
+}
+
+function loadProfile(){
+  let users=getUsers();
+  let u=users[viewingUser||currentUser];
+
+  profileName.innerHTML=
+    "@"+(viewingUser||currentUser)+
+    (isVerified(viewingUser||currentUser)?
+      ' <img class="verified" src="verified.png">':"");
+
+  profilePic.src = u.pic || "empty.jpg";
+  profileFollowers.innerText="Followers: "+(u.followers?.length||0);
 }
 
 /* POSTS */
@@ -296,8 +362,7 @@ function deletePost(id,owner){
 /* FEED */
 function loadFeed(){
   let users=getUsers();
-  let box=posts;
-  box.innerHTML="";
+  posts.innerHTML="";
 
   let all=[];
   Object.values(users).forEach(u=>{
@@ -328,37 +393,15 @@ function loadFeed(){
         ▲ ${p.likes?.length||0}
       </div>
 
-      <div style="font-size:11px;color:#777;">
-        ${p.time}
-      </div>
+      <div class="small">${p.time}</div>
 
-      ${p.user===currentUser?`
-        <div class="delete" onclick="deletePost(${p.id},'${p.user}')">
-          delete
-        </div>`:""}
+      ${p.user===currentUser?
+        `<div class="delete" onclick="deletePost(${p.id},'${p.user}')">delete</div>`
+        :""}
     `;
 
-    box.appendChild(div);
+    posts.appendChild(div);
   });
-}
-
-/* PROFILE */
-function openProfile(user){
-  viewingUser=user;
-  loadProfile();
-}
-
-function loadProfile(){
-  let users=getUsers();
-  let u=users[viewingUser||currentUser];
-
-  profileName.innerHTML=
-    "@"+(viewingUser||currentUser)+
-    (isVerified(viewingUser||currentUser)?
-      ' <img class="verified" src="verified.png">':"");
-
-  profilePic.src = u.pic || "empty.jpg";
-  profileFollowers.innerText="Followers: "+(u.followers?.length||0);
 }
 
 /* PROFILE PIC */
@@ -376,7 +419,7 @@ function updateProfile(){
   r.readAsDataURL(file);
 }
 
-/* MESSAGES FIX */
+/* MESSAGES */
 function sendMessage(){
   let users=getUsers();
   let to=msgUser.value.trim();
@@ -396,15 +439,13 @@ function sendMessage(){
   users[to].messages[currentUser].push(msg);
 
   saveUsers(users);
-
   msgText.value="";
   loadInbox();
 }
 
 function loadInbox(){
   let users=getUsers();
-  let box=messageList;
-  box.innerHTML="";
+  messageList.innerHTML="";
 
   let convos=users[currentUser].messages||{};
 
@@ -412,21 +453,20 @@ function loadInbox(){
     let div=document.createElement("div");
     div.innerText="@"+user;
     div.onclick=()=>openChat(user);
-    box.appendChild(div);
+    messageList.appendChild(div);
   });
 }
 
 function openChat(user){
   let users=getUsers();
-  let box=messageList;
-  box.innerHTML="";
+  messageList.innerHTML="";
 
   let msgs=users[currentUser].messages[user]||[];
 
   msgs.forEach(m=>{
     let div=document.createElement("div");
     div.innerText=m.from+": "+m.text;
-    box.appendChild(div);
+    messageList.appendChild(div);
   });
 }
 </script>
