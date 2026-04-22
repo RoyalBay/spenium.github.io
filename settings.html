@@ -8,20 +8,19 @@
 body{
   margin:0;
   font-family:Tahoma;
-  transition:0.3s;
 }
 
-/* TOP BAR SAME STYLE */
+/* TOP BAR */
 .topbar{
   background:#3b5998;
   color:white;
   padding:8px 12px;
   display:flex;
-  justify-content:space-between;
   align-items:center;
+  justify-content:space-between;
 }
 
-/* LOGO MATCH FEED */
+/* LOGO MATCH */
 .logo{
   display:flex;
   align-items:center;
@@ -31,10 +30,15 @@ body{
 }
 
 .logo img{
-  height:46px;
+  height:54px;
 }
 
-/* PANEL */
+/* BACK LEFT FIX */
+.backLeft{
+  margin-left:0;
+}
+
+/* CARD */
 .card{
   max-width:500px;
   margin:40px auto;
@@ -47,9 +51,9 @@ button{
   color:white;
   border:none;
   padding:8px;
-  cursor:pointer;
-  margin-top:5px;
   width:100%;
+  margin-top:6px;
+  cursor:pointer;
 }
 </style>
 </head>
@@ -57,12 +61,14 @@ button{
 <body>
 
 <div class="topbar">
+
   <div class="logo">
     <img src="Facebook.jpg">
     <span>WUPHF</span>
   </div>
 
-  <button onclick="back()">Back</button>
+  <button class="backLeft" onclick="back()">Back</button>
+
 </div>
 
 <div class="card">
@@ -83,14 +89,14 @@ function setTheme(t){
 }
 
 function applyTheme(){
-  let t=localStorage.getItem("theme")||"light";
+  let t = localStorage.getItem("theme") || "light";
 
-  document.body.style.background="#f5f6f7";
-  document.body.style.color="black";
+  if(t==="light"){
+    document.body.style.background="#f5f6f7";
+  }
 
   if(t==="dark"){
-    document.body.style.background="#1e1e1e";
-    document.body.style.color="white";
+    document.body.style.background="#2b2b2b";
   }
 
   if(t==="dynamic"){
