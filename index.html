@@ -12,6 +12,7 @@ body {
   background:linear-gradient(#dfe7f3,#f5f6f7);
 }
 
+/* TOP BAR */
 .topbar {
   background:#3b5998;
   color:white;
@@ -21,19 +22,49 @@ body {
   cursor:pointer;
 }
 
+/* SCREEN CONTROL */
 .screen { display:none; }
 
 .center {
-  max-width:400px;
+  max-width:420px;
   margin:80px auto;
 }
+
+/* APP LAYOUT */
+.container {
+  max-width:1050px;
+  margin:20px auto;
+  display:flex;
+  gap:10px;
+}
+
+.sidebar { width:150px; }
+.feed { width:580px; }
+.profile { width:250px; }
 
 .card {
   background:white;
   padding:12px;
   border-radius:4px;
+  margin-bottom:10px;
 }
 
+/* FIX: stop oversized inputs */
+input, textarea {
+  width:100%;
+  padding:8px;
+  margin:6px 0;
+  border:1px solid #ccc;
+  border-radius:3px;
+  box-sizing:border-box;
+}
+
+textarea {
+  height:70px;
+  resize:none;
+}
+
+/* BUTTONS */
 button {
   width:100%;
   padding:8px;
@@ -44,14 +75,71 @@ button {
   margin-top:5px;
 }
 
-input {
-  width:100%;
-  padding:8px;
-  margin:6px 0;
-  border:1px solid #ccc;
-  border-radius:3px;
+/* FEED */
+.user {
+  color:#3b5998;
+  font-weight:bold;
+  cursor:pointer;
 }
 
+.post {
+  border-top:1px solid #eee;
+  padding:10px 0;
+  position:relative;
+}
+
+/* FOLLOW BUTTON FIX */
+.follow-btn {
+  font-size:10px;
+  padding:2px 5px;
+  width:auto;
+  margin-left:8px;
+}
+
+.upvote {
+  cursor:pointer;
+  font-size:12px;
+}
+
+.delete {
+  position:absolute;
+  bottom:5px;
+  right:5px;
+  font-size:11px;
+  color:red;
+  cursor:pointer;
+}
+
+/* PROFILE */
+.profile-pic {
+  width:90px;
+  height:90px;
+  object-fit:cover;
+  border-radius:6px;
+}
+
+.profile-name {
+  font-weight:bold;
+}
+
+.verified {
+  width:14px;
+  vertical-align:middle;
+}
+
+/* MESSAGES */
+#messageList div {
+  padding:6px;
+  border-bottom:1px solid #eee;
+  cursor:pointer;
+}
+
+#chatBox div {
+  padding:6px;
+  margin:4px 0;
+  background:#f1f1f1;
+  border-radius:4px;
+}
 </style>
 </head>
 
@@ -62,6 +150,7 @@ input {
 <!-- WELCOME -->
 <div id="welcome" class="screen center card" style="display:block;">
   <h2>just WUPHF it.</h2>
+  <p style="font-size:12px;color:#555;">whenever. wherever.</p>
 
   <button onclick="showScreen('login')">Login</button>
   <button onclick="showScreen('signup')">Create Account</button>
@@ -85,72 +174,132 @@ input {
   <button onclick="createAccount()">Create</button>
 </div>
 
+<!-- APP -->
+<div id="app" class="screen">
+
+  <div class="container">
+
+    <div class="sidebar card">
+      <button onclick="showTab('feed')">Feed</button>
+      <button onclick="showTab('messages')">Messages</button>
+      <button onclick="logout()">Logout</button>
+    </div>
+
+    <!-- FEED -->
+    <div id="feed" class="feed card">
+      <h3>Feed</h3>
+      <textarea id="postText"></textarea>
+      <button onclick="addPost()">Post</button>
+      <div id="posts"></div>
+    </div>
+
+    <!-- MESSAGES -->
+    <div id="messages" class="feed card" style="display:none;">
+      <h3>Messages</h3>
+      <input id="msgUser" placeholder="Username">
+      <textarea id="msgText"></textarea>
+      <button onclick="sendMessage()">Send</button>
+
+      <div id="messageList"></div>
+      <div id="chatBox"></div>
+    </div>
+
+    <!-- PROFILE -->
+    <div id="profile" class="profile card">
+      <h3>Profile</h3>
+
+      <img id="profilePic" class="profile-pic" src="empty.jpg">
+
+      <input type="file" accept="image/*" onchange="updatePic(event)">
+
+      <p id="profileName" class="profile-name"></p>
+      <p id="profileFollowers"></p>
+    </div>
+
+  </div>
+</div>
+
 <script>
 
-/* ✅ SAFE DOM ACCESS (fixes broken buttons issue) */
-const loginUser = () => document.getElementById("loginUser");
-const loginPass = () => document.getElementById("loginPass");
-const signupUser = () => document.getElementById("signupUser");
-const signupPass = () => document.getElementById("signupPass");
-
 let currentUser=null;
+let viewingUser=null;
 
-/* SCREEN */
+/* NAVIGATION FIX (THIS WAS YOUR BIG BUG) */
 function showScreen(id){
   document.querySelectorAll(".screen").forEach(s=>s.style.display="none");
   document.getElementById(id).style.display="block";
 }
 
+function showTab(tab){
+  feed.style.display="none";
+  messages.style.display="none";
+
+  document.getElementById(tab).style.display="block";
+
+  if(tab==="messages") loadInbox();
+  if(tab==="feed") loadFeed();
+  loadProfile();
+}
+
 function goHome(){
-  showScreen("welcome");
+  if(!currentUser){
+    showScreen("welcome");
+  } else {
+    showScreen("app");
+    showTab("feed");
+  }
 }
 
 /* USERS */
 function getUsers(){
-  return JSON.parse(localStorage.getItem("users")||"{}");
+  let u=JSON.parse(localStorage.getItem("users")||"{}");
+
+  Object.keys(u).forEach(k=>{
+    u[k].posts ||= [];
+    u[k].followers ||= [];
+    u[k].following ||= [];
+    u[k].messages ||= {};
+    u[k].pic ||= "empty.jpg";
+  });
+
+  return u;
 }
 
 function saveUsers(u){
   localStorage.setItem("users",JSON.stringify(u));
 }
 
-/* 🔥 FIXED LOGIN (always works + errors show) */
+/* LOGIN */
 function login(){
   let users=getUsers();
 
-  let u=document.getElementById("loginUser").value.trim();
-  let p=document.getElementById("loginPass").value;
-
-  let err=document.getElementById("loginError");
+  let u=loginUser.value.trim();
+  let p=loginPass.value;
 
   if(!users[u]){
-    err.innerText="Incorrect username";
+    loginError.innerText="Incorrect username";
     return;
   }
 
   if(users[u].password!==p){
-    err.innerText="Incorrect password";
+    loginError.innerText="Incorrect password";
     return;
   }
 
   currentUser=u;
-  err.innerText="";
-  showScreen("app"); // NOTE: app screen exists in your full version
+  showScreen("app");   // FIXED: now actually loads app
+  showTab("feed");
 }
 
-/* 🔥 FIXED CREATE ACCOUNT */
+/* SIGNUP */
 function createAccount(){
   let users=getUsers();
 
-  let u=document.getElementById("signupUser").value.trim();
-  let p=document.getElementById("signupPass").value;
-
-  let err=document.getElementById("signupError");
-
-  if(!u || !p) return;
+  let u=signupUser.value.trim();
+  let p=signupPass.value;
 
   if(users[u]){
-    err.innerText="Username already exists";
+    signupError.innerText="Username already exists";
     return;
   }
 
@@ -165,7 +314,14 @@ function createAccount(){
 
   saveUsers(users);
 
-  err.innerText="Account created. Login.";
+  signupError.innerText="Account created. Login.";
+}
+
+/* LOGOUT FIX */
+function logout(){
+  currentUser=null;
+  viewingUser=null;
+  showScreen("welcome");
 }
 
 </script>
