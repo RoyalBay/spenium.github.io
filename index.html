@@ -53,10 +53,9 @@ input, textarea {
   border:1px solid #ccc;
   border-radius:3px;
   box-sizing:border-box;
-  resize:none;
 }
 
-textarea { height:70px; }
+textarea { height:70px; resize:none; }
 
 button {
   width:100%;
@@ -112,7 +111,6 @@ button {
   vertical-align:middle;
 }
 
-/* PROFILE NAME FIX */
 .profile-name {
   font-weight:bold;
 }
@@ -126,7 +124,6 @@ button {
 <!-- WELCOME -->
 <div id="welcome" class="screen center card" style="display:block;">
   <h2>just WUPHF it.</h2>
-  <p style="font-size:12px;color:#555;">whenever. whenever.</p>
   <button onclick="showScreen('login')">Login</button>
   <button onclick="showScreen('signup')">Create Account</button>
 </div>
@@ -159,6 +156,7 @@ button {
       <button onclick="logout()">Logout</button>
     </div>
 
+    <!-- FEED -->
     <div id="feed" class="feed card">
       <h3>Feed</h3>
       <textarea id="postText"></textarea>
@@ -166,6 +164,7 @@ button {
       <div id="posts"></div>
     </div>
 
+    <!-- MESSAGES -->
     <div id="messages" class="feed card" style="display:none;">
       <h3>Messages</h3>
       <input id="msgUser" placeholder="Username">
@@ -177,9 +176,14 @@ button {
       <div id="chatBox"></div>
     </div>
 
+    <!-- PROFILE -->
     <div id="profile" class="profile card">
       <h3>Profile</h3>
       <img id="profilePic" class="profile-pic" src="empty.jpg">
+
+      <input id="newPic" placeholder="Profile picture URL">
+      <button onclick="updatePic()">Update Profile Picture</button>
+
       <p id="profileName" class="profile-name"></p>
       <p id="profileFollowers"></p>
     </div>
@@ -197,14 +201,31 @@ function showScreen(id){
   document.getElementById(id).style.display="block";
 }
 
+/* TAB SYSTEM FIX */
+function showTab(tab){
+  document.getElementById("feed").style.display="none";
+  document.getElementById("messages").style.display="none";
+
+  document.getElementById(tab).style.display="block";
+
+  if(tab==="messages"){
+    loadInbox();
+  }
+
+  if(tab==="feed"){
+    loadFeed();
+  }
+
+  loadProfile();
+}
+
+/* HOME */
 function goHome(){
   if(!currentUser){
     showScreen("welcome");
   } else {
     showScreen("app");
     showTab("feed");
-    viewingUser=null;
-    loadProfile();
   }
 }
 
@@ -243,7 +264,7 @@ function createAccount(){
   signupError.innerText="Account created. Login.";
 }
 
-/* LOGIN */
+/* LOGIN FIX */
 function login(){
   let users=getUsers();
   let u=loginUser.value;
@@ -256,8 +277,7 @@ function login(){
 
   currentUser=u;
   showScreen("app");
-  loadFeed();
-  loadProfile();
+  showTab("feed");
 }
 
 /* LOGOUT */
@@ -265,7 +285,7 @@ function logout(){
   location.reload();
 }
 
-/* VERIFIED */
+/* VERIFIED (UNCHANGED) */
 function isVerified(user){
   let users=getUsers();
   return (users[user]?.followers.length||0)>=100;
@@ -276,15 +296,15 @@ function toggleFollow(user){
   let users=getUsers();
   if(user===currentUser) return;
 
-  let following = users[currentUser].following;
-  let followers = users[user].followers;
+  let following=users[currentUser].following;
+  let followers=users[user].followers;
 
   if(!following.includes(user)){
     following.push(user);
     followers.push(currentUser);
   } else {
-    users[currentUser].following = following.filter(x=>x!==user);
-    users[user].followers = followers.filter(x=>x!==currentUser);
+    users[currentUser].following=following.filter(x=>x!==user);
+    users[user].followers=followers.filter(x=>x!==currentUser);
   }
 
   saveUsers(users);
@@ -336,14 +356,13 @@ function deletePost(id,owner){
   if(owner!==currentUser) return;
 
   let users=getUsers();
-  users[currentUser].posts =
-    users[currentUser].posts.filter(p=>p.id!==id);
+  users[currentUser].posts=users[currentUser].posts.filter(p=>p.id!==id);
 
   saveUsers(users);
   loadFeed();
 }
 
-/* FEED (VERIFIED FIXED HERE) */
+/* FEED */
 function loadFeed(){
   let users=getUsers();
   posts.innerHTML="";
@@ -353,57 +372,51 @@ function loadFeed(){
   all.sort((a,b)=>b.id-a.id);
 
   all.forEach(p=>{
-    let isFollowing = users[currentUser].following.includes(p.user);
-
     let div=document.createElement("div");
     div.className="post";
 
     div.innerHTML=`
-      <div>
-        <span class="user" onclick="openProfile('${p.user}')">
-          @${p.user}
-          ${isVerified(p.user)?'<img class="verified" src="verified.png">':''}
-        </span>
-        <button class="follow-btn" onclick="toggleFollow('${p.user}')">
-          ${isFollowing ? "Unfollow" : "Follow"}
-        </button>
-      </div>
+      <span class="user">@${p.user}
+      ${isVerified(p.user)?'<img class="verified" src="verified.png">':''}</span>
 
       <div>${p.text}</div>
 
       <div class="upvote" onclick="upvote(${p.id})">▲ ${p.likes.length}</div>
 
-      <div style="font-size:11px;color:#777;">${p.time}</div>
-
-      ${p.user===currentUser ?
-        `<div class="delete" onclick="deletePost(${p.id},'${p.user}')">delete</div>`
-        : ""}
+      ${p.user===currentUser?
+        `<div class="delete" onclick="deletePost(${p.id},'${p.user}')">delete</div>`:""}
     `;
 
     posts.appendChild(div);
   });
 }
 
-/* PROFILE (VERIFIED FIXED HERE) */
-function openProfile(user){
-  viewingUser=user;
-  loadProfile();
-}
-
+/* PROFILE */
 function loadProfile(){
   let users=getUsers();
   let u=users[viewingUser||currentUser];
 
-  profileName.innerHTML =
-    "@"+(viewingUser||currentUser)+
-    (isVerified(viewingUser||currentUser)?
-      ' <img class="verified" src="verified.png">':"");
-
   profilePic.src=u.pic;
+  profileName.innerHTML="@"+(viewingUser||currentUser)+
+    (isVerified(viewingUser||currentUser)?
+    ' <img class="verified" src="verified.png">':"");
+
   profileFollowers.innerText="Followers: "+u.followers.length;
 }
 
-/* MESSAGES (REAL FIX: DUPLICATE OBJECTS) */
+/* PROFILE PIC FIX */
+function updatePic(){
+  let users=getUsers();
+  let url=newPic.value.trim();
+  if(!url) return;
+
+  users[currentUser].pic=url;
+  saveUsers(users);
+
+  loadProfile();
+}
+
+/* MESSAGES */
 function sendMessage(){
   let users=getUsers();
   let to=msgUser.value.trim();
@@ -414,15 +427,8 @@ function sendMessage(){
   users[currentUser].messages[to] ||= [];
   users[to].messages[currentUser] ||= [];
 
-  users[currentUser].messages[to].push({
-    from:currentUser,
-    text:text
-  });
-
-  users[to].messages[currentUser].push({
-    from:currentUser,
-    text:text
-  });
+  users[currentUser].messages[to].push({from:currentUser,text});
+  users[to].messages[currentUser].push({from:currentUser,text});
 
   saveUsers(users);
 
@@ -434,9 +440,7 @@ function loadInbox(){
   let users=getUsers();
   messageList.innerHTML="";
 
-  let convos=users[currentUser].messages;
-
-  Object.keys(convos).forEach(user=>{
+  Object.keys(users[currentUser].messages).forEach(user=>{
     let div=document.createElement("div");
     div.innerText="@"+user;
     div.onclick=()=>loadChat(user);
@@ -448,9 +452,7 @@ function loadChat(user){
   let users=getUsers();
   chatBox.innerHTML="";
 
-  let msgs=users[currentUser].messages[user]||[];
-
-  msgs.forEach(m=>{
+  (users[currentUser].messages[user]||[]).forEach(m=>{
     let div=document.createElement("div");
     div.innerText=m.from+": "+m.text;
     chatBox.appendChild(div);
