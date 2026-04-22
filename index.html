@@ -1,9 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>WUPHF</title>
 
 <style>
@@ -11,362 +10,176 @@ body {
   margin: 0;
   font-family: Tahoma, Arial, sans-serif;
   background: linear-gradient(#dfe7f3, #f5f6f7);
-  color: #1c1e21;
 }
 
+/* TOP BAR */
 .topbar {
-  background: linear-gradient(#4c66a4, #3b5998);
+  background: #3b5998;
   color: white;
-  padding: 12px 18px;
-  font-weight: bold;
-  font-size: 22px;
-}
-
-.container {
-  max-width: 900px;
-  margin: 20px auto;
-  display: none;
-}
-
-.card {
-  background: white;
-  border: 1px solid #cfd6e4;
-  padding: 15px;
-  margin-bottom: 10px;
-  border-radius: 4px;
-}
-
-input, button, textarea, select {
-  width: 100%;
   padding: 10px;
-  margin-top: 5px;
-  margin-bottom: 10px;
-  border: 1px solid #ccd0d5;
-  font-family: Tahoma;
-  border-radius: 3px;
-  box-sizing: border-box;
-}
-
-button {
-  background: linear-gradient(#4c66a4, #3b5998);
-  color: white;
-  cursor: pointer;
-  border: none;
   font-weight: bold;
-}
-
-textarea {
-  resize: none;
-  height: 80px;
-}
-
-.user {
-  font-weight: bold;
-  color: #3b5998;
-}
-
-.post-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.follow-btn {
-  font-size: 10px;
-  padding: 3px 6px;
-  width: auto;
-}
-
-.like-btn {
+.logout-btn {
   cursor: pointer;
-  color: #3b5998;
-  margin-right: 10px;
+  background: #2d4373;
+  border: none;
+  color: white;
+  padding: 5px 10px;
 }
 
-.delete-btn {
-  cursor: pointer;
-  color: red;
-  font-size: 12px;
+/* MAIN LAYOUT */
+.container {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  padding: 10px;
 }
 
-.small {
-  font-size: 11px;
-  color: #777;
+/* PROFILE SECTION */
+.profile {
+  width: 220px;
+  background: white;
+  border: 2px solid #c0c0c0; /* FIXED BORDER */
+  padding: 10px;
+  height: fit-content;
 }
 
 .profile-pic {
-  width: 90px;
-  height: 90px;
-  object-fit: cover;
-  border-radius: 6px;
+  width: 100%;
+  height: 150px;
+  background: #ddd;
+  border: 2px solid #999; /* FIXED BORDER VISIBILITY */
+  margin-bottom: 10px;
+}
+
+/* FEED */
+.feed {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* POST */
+.post {
+  background: white;
+  border: 1px solid #c0c0c0;
+  padding: 10px;
+  position: relative;
+}
+
+/* THREE DOT MENU */
+.post-menu {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  cursor: pointer;
+}
+
+.post-menu:hover .dropdown {
   display: block;
+}
+
+.dropdown {
+  display: none;
+  position: absolute;
+  right: 0;
+  background: white;
+  border: 1px solid #ccc;
+  z-index: 10;
+}
+
+.dropdown div {
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.dropdown div:hover {
+  background: #eee;
+}
+
+/* LOGIN SCREEN */
+.login {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #dfe7f3;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.login-box {
+  background: white;
+  padding: 20px;
+  border: 2px solid #3b5998;
 }
 </style>
 </head>
 
 <body>
 
-<div class="topbar">WUPHF</div>
-
 <!-- LOGIN -->
-<div id="loginBox" class="card" style="max-width:400px;margin:80px auto;">
-  <h3>Login</h3>
-  <input id="username" placeholder="Username" />
-  <input id="password" type="password" placeholder="Password" />
-  <button onclick="login()">Enter</button>
+<div class="login" id="loginScreen">
+  <div class="login-box">
+    <h3>WUPHF Login</h3>
+    <input id="username" placeholder="Username"/><br/><br/>
+    <input id="password" type="password" placeholder="Password"/><br/><br/>
+    <button onclick="login()">Login</button>
+  </div>
 </div>
 
-<!-- APP -->
-<div class="container" id="app">
+<!-- TOP BAR -->
+<div class="topbar">
+  <div>WUPHF</div>
+  <button class="logout-btn" onclick="logout()">Logout</button>
+</div>
 
-  <div class="card">
-    <button onclick="showTab('feed')">Feed</button>
-    <button onclick="showTab('profile')">Profile</button>
-    <button onclick="logout()">Logout</button>
+<!-- MAIN -->
+<div class="container" id="app" style="display:none;">
+
+  <!-- PROFILE -->
+  <div class="profile">
+    <div class="profile-pic"></div>
+    <div id="profileName">@user</div>
   </div>
 
   <!-- FEED -->
-  <div id="feed" class="card">
-    <h3>Feed</h3>
-    <textarea id="postText" placeholder="What's on your mind?"></textarea>
-    <button onclick="addPost()">Post</button>
-    <div id="posts"></div>
-  </div>
+  <div class="feed" id="feed">
 
-  <!-- PROFILE -->
-  <div id="profile" class="card" style="display:none;">
-    <h3>Profile</h3>
-
-    <!-- PROFILE IMAGE + FRAME -->
-    <div style="position:relative; width:90px; height:90px;">
-      <img id="profilePic" class="profile-pic" />
-      <img id="profileFrame"
-           style="position:absolute; top:0; left:0; width:90px; height:90px; pointer-events:none;">
+    <div class="post">
+      <div class="post-menu">
+        ⋯
+        <div class="dropdown">
+          <div onclick="deletePost(this)">Delete</div>
+        </div>
+      </div>
+      First WUPHF post 🚀
     </div>
 
-    <input type="file" id="profileUpload" />
-
-    <select id="frameSelect">
-      <option value="frame-none">None</option>
-      <option value="frame-gold">Gold</option>
-      <option value="frame-silver">Silver</option>
-      <option value="frame-pink">Pink</option>
-    </select>
-
-    <button onclick="updateProfile()">Update</button>
-
-    <p id="profileName" style="font-weight:bold;"></p>
-    <p id="profileFollowers"></p>
   </div>
 
 </div>
 
 <script>
-let currentUser = null;
-
-function getUsers() {
-  return JSON.parse(localStorage.getItem("users") || "{}");
-}
-
-function saveUsers(u) {
-  localStorage.setItem("users", JSON.stringify(u));
-}
-
-/* LOGIN */
 function login() {
-  let users = getUsers();
-  let u = username.value;
-  let p = password.value;
-
-  if (!users[u]) {
-    users[u] = {
-      password: p,
-      pic: "",
-      frame: "frame-none",
-      posts: [],
-      followers: [],
-      following: []
-    };
-  } else if (users[u].password !== p) {
-    alert("Wrong password");
-    return;
-  }
-
-  currentUser = u;
-  saveUsers(users);
-
-  loginBox.style.display = "none";
-  app.style.display = "block";
-
-  loadProfile();
-  loadFeed();
+  document.getElementById("loginScreen").style.display = "none";
+  document.getElementById("app").style.display = "flex";
 }
 
 function logout() {
-  location.reload();
+  document.getElementById("loginScreen").style.display = "flex";
+  document.getElementById("app").style.display = "none";
 }
 
-function showTab(tab) {
-  feed.style.display = tab === "feed" ? "block" : "none";
-  profile.style.display = tab === "profile" ? "block" : "none";
-}
-
-/* POST */
-function addPost() {
-  let users = getUsers();
-  let text = postText.value.trim();
-  if (!text) return;
-
-  users[currentUser].posts.unshift({
-    id: Date.now(),
-    user: currentUser,
-    text,
-    likes: [],
-    time: new Date().toLocaleString()
-  });
-
-  saveUsers(users);
-  postText.value = "";
-  loadFeed();
-}
-
-/* LIKE */
-function likePost(id) {
-  let users = getUsers();
-
-  Object.values(users).forEach(u => {
-    (u.posts || []).forEach(p => {
-      if (p.id === id) {
-        p.likes ||= [];
-
-        if (!p.likes.includes(currentUser)) {
-          p.likes.push(currentUser);
-        } else {
-          p.likes = p.likes.filter(x => x !== currentUser);
-        }
-      }
-    });
-  });
-
-  saveUsers(users);
-  loadFeed();
-}
-
-/* DELETE */
-function deletePost(id) {
-  let users = getUsers();
-
-  Object.values(users).forEach(u => {
-    if (u.posts) {
-      u.posts = u.posts.filter(p =>
-        !(p.id === id && (p.user === currentUser || currentUser === "wuphf"))
-      );
-    }
-  });
-
-  saveUsers(users);
-  loadFeed();
-}
-
-/* VERIFIED */
-function isVerified(user) {
-  let users = getUsers();
-  return (users[user]?.followers?.length || 0) >= 5;
-}
-
-/* FEED */
-function loadFeed() {
-  let users = getUsers();
-  let box = document.getElementById("posts");
-  box.innerHTML = "";
-
-  let posts = [];
-  Object.values(users).forEach(u => {
-    if (u.posts) posts.push(...u.posts);
-  });
-
-  posts.sort((a, b) => b.id - a.id);
-
-  posts.forEach(p => {
-    let verified = isVerified(p.user);
-    let isFollowing = users[currentUser]?.following?.includes(p.user);
-    let liked = p.likes?.includes(currentUser);
-
-    let div = document.createElement("div");
-
-    div.innerHTML = `
-      <div class="post-header">
-        <div>
-          <span class="user">@${p.user}</span>
-          ${verified ? '<img src="verified.png" width="14">' : ''}
-        </div>
-
-        <button class="follow-btn" onclick="toggleFollow('${p.user}')">
-          ${isFollowing ? "Unfollow" : "Follow"}
-        </button>
-      </div>
-
-      <div>${p.text}</div>
-
-      <div>
-        <span class="like-btn" onclick="likePost(${p.id})">
-          👍 ${p.likes?.length || 0}
-        </span>
-
-        <span class="delete-btn" onclick="deletePost(${p.id})">
-          🗑 Delete
-        </span>
-      </div>
-
-      <div class="small">${p.time}</div>
-      <hr>
-    `;
-
-    box.appendChild(div);
-  });
-}
-
-/* PROFILE */
-function loadProfile() {
-  let users = getUsers();
-  let u = users[currentUser];
-
-  profileName.innerText = "@" + currentUser;
-  profilePic.src = u.pic || "";
-  profileFollowers.innerText = "Followers: " + (u.followers?.length || 0);
-
-  // FRAME LOGIC
-  let frame = u.frame;
-
-  if (frame === "frame-gold") {
-    profileFrame.src = "gold.png";
-  } else if (frame === "frame-silver") {
-    profileFrame.src = "silver.png";
-  } else if (frame === "frame-pink") {
-    profileFrame.src = "pink.png";
-  } else {
-    profileFrame.src = "";
-  }
-}
-
-/* UPDATE PROFILE */
-function updateProfile() {
-  let users = getUsers();
-
-  let file = profileUpload.files[0];
-  if (file) {
-    let r = new FileReader();
-    r.onload = e => {
-      users[currentUser].pic = e.target.result;
-      saveUsers(users);
-      loadProfile();
-    };
-    r.readAsDataURL(file);
-  }
-
-  users[currentUser].frame = frameSelect.value;
-  saveUsers(users);
-  loadProfile();
+function deletePost(el) {
+  el.closest(".post").remove();
 }
 </script>
 
