@@ -3,390 +3,148 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WUPHF</title>
+<title>WUPHF Login</title>
 
 <style>
-
-/* THEMES */
-body.light {
+body {
   margin:0;
-  font-family:Tahoma;
-  background:linear-gradient(#dfe7f3,#f5f6f7);
+  font-family: Tahoma, Arial, sans-serif;
+  background: linear-gradient(#dfe7f3, #f5f6f7);
 }
 
-body.dark {
-  margin:0;
-  font-family:Tahoma;
-  background:#1c1c1c;
-  color:white;
-}
-
-body.dynamic {
-  margin:0;
-  font-family:Tahoma;
-  background:linear-gradient(135deg,#141e30,#243b55);
-  color:white;
-}
-
-/* TOP BAR */
-.topbar {
-  background:#3b5998;
-  color:white;
-  padding:12px 18px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  font-weight:bold;
-}
-
-.nav button {
-  background:#3b5998;
-  color:white;
-  border:none;
-  padding:6px 10px;
-  margin-left:6px;
-  cursor:pointer;
-}
-
-/* LAYOUT FIX (NO RESIZING EVER) */
-.container {
-  display:flex;
-  max-width:1200px;
-  margin:20px auto;
-  gap:10px;
-}
-
-.feed { flex:1; }
-
-.profile {
-  width:260px;
-}
-
-/* CARD */
+/* CENTER CARD */
 .card {
+  max-width:420px;
+  margin:80px auto;
   background:white;
-  padding:12px;
+  padding:16px;
   border-radius:5px;
 }
 
-body.dark .card,
-body.dynamic .card {
-  background:#2a2a2a;
-}
-
-/* INPUT FIX (NO RESIZE ANYWHERE) */
-input, textarea {
+/* INPUTS */
+input {
   width:100%;
   padding:10px;
   margin:6px 0;
   box-sizing:border-box;
-  resize:none; /* FIXED */
 }
 
-/* FORCE FEED TEXT AREA SIZE */
-#postText {
-  height:90px;
-}
-
-/* POSTS */
-.post {
-  border-top:1px solid #ddd;
-  padding:10px 0;
-  position:relative;
-}
-
-.user {
-  font-weight:bold;
-  color:#3b5998;
-}
-
-/* BUTTONS */
+/* BUTTONS (KEEP OLD STYLE) */
 button {
+  width:100%;
+  padding:10px;
   background:#3b5998;
   color:white;
   border:none;
-  padding:6px 10px;
   cursor:pointer;
-  width:auto;
+  margin-top:6px;
 }
 
-/* DELETE */
-.delete {
-  position:absolute;
-  bottom:5px;
-  right:5px;
-  font-size:11px;
+/* HEADER TEXT */
+h2 {
+  margin:0 0 5px 0;
+}
+
+.sub {
+  margin:0 0 15px 0;
+  color:#666;
+  font-size:13px;
+}
+
+/* ERROR */
+#error {
   color:red;
-  cursor:pointer;
+  font-size:12px;
+  margin-top:8px;
 }
-
-/* PROFILE PIC */
-.profile-pic {
-  width:90px;
-  height:90px;
-  border-radius:6px;
-  object-fit:cover;
-}
-
-/* LOGIN FIX (NO TINY BOXES) */
-#login {
-  max-width:400px;
-  margin:80px auto;
-}
-
-#login input {
-  width:100%;
-  padding:10px;
-}
-
 </style>
 </head>
 
-<body class="light">
+<body>
 
-<!-- TOP BAR -->
-<div class="topbar">
-  <div onclick="goHome()" style="cursor:pointer;">WUPHF</div>
-
-  <div class="nav">
-    <button onclick="showFeed()">Feed</button>
-    <button onclick="openSettings()">Settings</button>
-    <button onclick="logout()">Logout</button>
-  </div>
-</div>
-
-<!-- LOGIN -->
-<div id="login" class="card">
+<div class="card">
   <h2>just WUPHF it.</h2>
-  <p>whenever. wherever.</p>
+  <p class="sub">whenever. wherever.</p>
 
-  <input id="user" placeholder="username">
-  <input id="pass" type="password" placeholder="password">
-
+  <!-- LOGIN -->
+  <h3>Login</h3>
+  <input id="loginUser" placeholder="username">
+  <input id="loginPass" type="password" placeholder="password">
   <button onclick="login()">Login</button>
-  <button onclick="createAccount()">Create Account</button>
 
-  <div id="error" style="color:red;"></div>
-</div>
+  <hr>
 
-<!-- SETTINGS -->
-<div id="settings" class="card" style="display:none;max-width:500px;margin:40px auto;">
-  <h2>Themes</h2>
+  <!-- SIGNUP -->
+  <h3>Create Account</h3>
+  <input id="newUser" placeholder="choose username">
+  <input id="newPass" type="password" placeholder="choose password">
+  <button onclick="signup()">Sign Up</button>
 
-  <button onclick="setTheme('light')">Light</button>
-  <button onclick="setTheme('dark')">Dark</button>
-  <button onclick="setTheme('dynamic')">Dynamic</button>
-</div>
-
-<!-- APP -->
-<div id="app" style="display:none;">
-
-<div class="container">
-
-  <!-- FEED -->
-  <div class="feed card">
-    <h3>Feed</h3>
-
-    <textarea id="postText"></textarea>
-    <button onclick="addPost()">Post</button>
-
-    <div id="posts"></div>
-  </div>
-
-  <!-- PROFILE -->
-  <div class="profile card">
-    <h3>Profile</h3>
-
-    <img id="profilePic" class="profile-pic">
-    
-    <!-- FIXED: BUTTON BACK -->
-    <input type="file" onchange="uploadPic(event)">
-    <button onclick="refreshProfile()">Update Profile</button>
-
-    <p id="profileName"></p>
-    <p id="followers"></p>
-  </div>
-
-</div>
-
+  <div id="error"></div>
 </div>
 
 <script>
 
-let currentUser=null;
-let likedMap={};
-
-/* USERS SAFE INIT */
+/* SAFE USER STORAGE */
 function getUsers(){
-  return JSON.parse(localStorage.getItem("users")||"{}");
+  return JSON.parse(localStorage.getItem("users") || "{}");
 }
 
-function saveUsers(u){
-  localStorage.setItem("users",JSON.stringify(u));
+function saveUsers(users){
+  localStorage.setItem("users", JSON.stringify(users));
 }
 
-/* LOGIN FIX */
+/* LOGIN (FIXED PROPERLY) */
 function login(){
-  let users=getUsers();
+  let users = getUsers();
 
-  if(!users[user.value]){
-    error.innerText="User not found";
+  let u = loginUser.value.trim();
+  let p = loginPass.value;
+
+  if(!users[u]){
+    error.innerText = "User not found";
     return;
   }
 
-  if(users[user.value].password!==pass.value){
-    error.innerText="Wrong password";
+  if(users[u].password !== p){
+    error.innerText = "Wrong password";
     return;
   }
 
-  currentUser=user.value;
+  // STORE SESSION
+  localStorage.setItem("currentUser", u);
 
-  document.getElementById("login").style.display="none";
-  document.getElementById("app").style.display="block";
-
-  loadFeed();
-  loadProfile();
+  // GO TO FEED
+  window.location.href = "feed.html";
 }
 
-/* CREATE ACCOUNT */
-function createAccount(){
-  let users=getUsers();
+/* SIGNUP */
+function signup(){
+  let users = getUsers();
 
-  users[user.value]={
-    password:pass.value,
-    posts:[],
-    followers:[],
-    pic:""
+  let u = newUser.value.trim();
+  let p = newPass.value;
+
+  if(!u || !p){
+    error.innerText = "Fill in all fields";
+    return;
+  }
+
+  if(users[u]){
+    error.innerText = "Username already exists";
+    return;
+  }
+
+  users[u] = {
+    password: p,
+    posts: [],
+    followers: [],
+    pic: ""
   };
 
   saveUsers(users);
-}
 
-/* NAV */
-function showFeed(){
-  document.getElementById("settings").style.display="none";
-  document.getElementById("app").style.display="block";
-}
-
-function openSettings(){
-  document.getElementById("app").style.display="none";
-  document.getElementById("settings").style.display="block";
-}
-
-/* THEME FIX */
-function setTheme(t){
-  document.body.className=t;
-}
-
-/* POSTS */
-function addPost(){
-  let users=getUsers();
-
-  users[currentUser].posts.unshift({
-    id:Date.now(),
-    user:currentUser,
-    text:postText.value,
-    likes:0,
-    likedBy:{},
-    time:new Date().toLocaleString()
-  });
-
-  saveUsers(users);
-  loadFeed();
-}
-
-/* FEED */
-function loadFeed(){
-  let users=getUsers();
-  posts.innerHTML="";
-
-  let all=[];
-  Object.values(users).forEach(u=>{
-    if(u.posts) all.push(...u.posts);
-  });
-
-  all.sort((a,b)=>b.id-a.id);
-
-  all.forEach(p=>{
-
-    let div=document.createElement("div");
-    div.className="post";
-
-    div.innerHTML=`
-      <div class="user">@${p.user}</div>
-      <div>${p.text}</div>
-      <div style="font-size:11px">${p.time}</div>
-
-      <button onclick="like(${p.id})">▲ ${p.likes}</button>
-
-      ${p.user===currentUser?`<div class="delete" onclick="del(${p.id})">delete</div>`:""}
-    `;
-
-    posts.appendChild(div);
-  });
-}
-
-/* LIKE FIX (NO DOUBLE LIKE PER USER) */
-function like(id){
-  let users=getUsers();
-
-  Object.values(users).forEach(u=>{
-    (u.posts||[]).forEach(p=>{
-      if(p.id===id){
-        if(!p.likedBy) p.likedBy={};
-        if(p.likedBy[currentUser]) return;
-
-        p.likes++;
-        p.likedBy[currentUser]=true;
-      }
-    });
-  });
-
-  saveUsers(users);
-  loadFeed();
-}
-
-/* DELETE */
-function del(id){
-  let users=getUsers();
-  users[currentUser].posts=users[currentUser].posts.filter(p=>p.id!==id);
-  saveUsers(users);
-  loadFeed();
-}
-
-/* PROFILE FIX */
-function loadProfile(){
-  let users=getUsers();
-  let u=users[currentUser];
-
-  profilePic.src=u.pic||"";
-  profileName.innerHTML="<b>@"+currentUser+"</b>";
-  followers.innerText="Followers: "+(u.followers?.length||0);
-}
-
-/* PROFILE PIC FIX */
-function uploadPic(e){
-  let file=e.target.files[0];
-  let r=new FileReader();
-
-  r.onload=()=>{
-    let users=getUsers();
-    users[currentUser].pic=r.result;
-    saveUsers(users);
-    loadProfile();
-  };
-
-  r.readAsDataURL(file);
-}
-
-/* REFRESH */
-function refreshProfile(){
-  loadProfile();
-}
-
-/* LOGOUT */
-function logout(){
-  location.reload();
+  error.innerText = "Account created. Now log in.";
 }
 
 </script>
