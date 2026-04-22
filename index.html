@@ -83,6 +83,7 @@ button {
   font-size:11px;
   padding:3px 6px;
   width:auto;
+  margin-left:10px;
 }
 
 .upvote {
@@ -114,6 +115,20 @@ button {
 .profile-name {
   font-weight:bold;
 }
+
+/* MESSAGES FIX */
+#messageList div {
+  padding:6px;
+  border-bottom:1px solid #eee;
+  cursor:pointer;
+}
+
+#chatBox div {
+  padding:6px;
+  margin:4px 0;
+  background:#f1f1f1;
+  border-radius:4px;
+}
 </style>
 </head>
 
@@ -124,6 +139,7 @@ button {
 <!-- WELCOME -->
 <div id="welcome" class="screen center card" style="display:block;">
   <h2>just WUPHF it.</h2>
+  <p style="font-size:12px;color:#555;">whenever. whenever.</p>
   <button onclick="showScreen('login')">Login</button>
   <button onclick="showScreen('signup')">Create Account</button>
 </div>
@@ -167,22 +183,22 @@ button {
     <!-- MESSAGES -->
     <div id="messages" class="feed card" style="display:none;">
       <h3>Messages</h3>
+
       <input id="msgUser" placeholder="Username">
       <textarea id="msgText"></textarea>
       <button onclick="sendMessage()">Send</button>
 
       <div id="messageList"></div>
-      <hr>
       <div id="chatBox"></div>
     </div>
 
     <!-- PROFILE -->
     <div id="profile" class="profile card">
       <h3>Profile</h3>
+
       <img id="profilePic" class="profile-pic" src="empty.jpg">
 
-      <input id="newPic" placeholder="Profile picture URL">
-      <button onclick="updatePic()">Update Profile Picture</button>
+      <input type="file" accept="image/*" onchange="updatePic(event)">
 
       <p id="profileName" class="profile-name"></p>
       <p id="profileFollowers"></p>
@@ -201,21 +217,15 @@ function showScreen(id){
   document.getElementById(id).style.display="block";
 }
 
-/* TAB SYSTEM FIX */
+/* TAB */
 function showTab(tab){
   document.getElementById("feed").style.display="none";
   document.getElementById("messages").style.display="none";
 
   document.getElementById(tab).style.display="block";
 
-  if(tab==="messages"){
-    loadInbox();
-  }
-
-  if(tab==="feed"){
-    loadFeed();
-  }
-
+  if(tab==="messages") loadInbox();
+  if(tab==="feed") loadFeed();
   loadProfile();
 }
 
@@ -247,7 +257,7 @@ function saveUsers(u){
   localStorage.setItem("users",JSON.stringify(u));
 }
 
-/* ACCOUNT */
+/* CREATE */
 function createAccount(){
   let users=getUsers();
   let u=signupUser.value.trim();
@@ -264,7 +274,7 @@ function createAccount(){
   signupError.innerText="Account created. Login.";
 }
 
-/* LOGIN FIX */
+/* LOGIN */
 function login(){
   let users=getUsers();
   let u=loginUser.value;
@@ -280,18 +290,13 @@ function login(){
   showTab("feed");
 }
 
-/* LOGOUT */
-function logout(){
-  location.reload();
-}
-
-/* VERIFIED (UNCHANGED) */
+/* VERIFIED */
 function isVerified(user){
   let users=getUsers();
   return (users[user]?.followers.length||0)>=100;
 }
 
-/* FOLLOW */
+/* FOLLOW FIX RESTORED */
 function toggleFollow(user){
   let users=getUsers();
   if(user===currentUser) return;
@@ -362,7 +367,7 @@ function deletePost(id,owner){
   loadFeed();
 }
 
-/* FEED */
+/* FEED FIXED LINKS + FOLLOW */
 function loadFeed(){
   let users=getUsers();
   posts.innerHTML="";
@@ -372,12 +377,20 @@ function loadFeed(){
   all.sort((a,b)=>b.id-a.id);
 
   all.forEach(p=>{
+    let isFollowing=users[currentUser].following.includes(p.user);
+
     let div=document.createElement("div");
     div.className="post";
 
     div.innerHTML=`
-      <span class="user">@${p.user}
-      ${isVerified(p.user)?'<img class="verified" src="verified.png">':''}</span>
+      <span class="user" onclick="openProfile('${p.user}')">
+        @${p.user}
+        ${isVerified(p.user)?'<img class="verified" src="verified.png">':''}
+      </span>
+
+      <button class="follow-btn" onclick="toggleFollow('${p.user}')">
+        ${isFollowing?"Unfollow":"Follow"}
+      </button>
 
       <div>${p.text}</div>
 
@@ -391,12 +404,30 @@ function loadFeed(){
   });
 }
 
+/* PROFILE PIC UPLOAD FIX */
+function updatePic(e){
+  let file=e.target.files[0];
+  if(!file) return;
+
+  let reader=new FileReader();
+
+  reader.onload=function(){
+    let users=getUsers();
+    users[currentUser].pic=reader.result;
+    saveUsers(users);
+    loadProfile();
+  };
+
+  reader.readAsDataURL(file);
+}
+
 /* PROFILE */
 function loadProfile(){
   let users=getUsers();
   let u=users[viewingUser||currentUser];
 
   profilePic.src=u.pic;
+
   profileName.innerHTML="@"+(viewingUser||currentUser)+
     (isVerified(viewingUser||currentUser)?
     ' <img class="verified" src="verified.png">':"");
@@ -404,19 +435,12 @@ function loadProfile(){
   profileFollowers.innerText="Followers: "+u.followers.length;
 }
 
-/* PROFILE PIC FIX */
-function updatePic(){
-  let users=getUsers();
-  let url=newPic.value.trim();
-  if(!url) return;
-
-  users[currentUser].pic=url;
-  saveUsers(users);
-
+function openProfile(user){
+  viewingUser=user;
   loadProfile();
 }
 
-/* MESSAGES */
+/* MESSAGES FIX */
 function sendMessage(){
   let users=getUsers();
   let to=msgUser.value.trim();
