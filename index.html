@@ -6,26 +6,10 @@
 <title>WUPHF</title>
 
 <style>
-
-/* THEMES */
-body.light {
+body {
   margin:0;
   font-family:Tahoma;
   background:linear-gradient(#dfe7f3,#f5f6f7);
-}
-
-body.dark {
-  margin:0;
-  font-family:Tahoma;
-  background:#1c1c1c;
-  color:white;
-}
-
-body.dynamic {
-  margin:0;
-  font-family:Tahoma;
-  background:linear-gradient(135deg,#141e30,#243b55);
-  color:white;
 }
 
 /* TOP BAR */
@@ -35,15 +19,13 @@ body.dynamic {
   padding:12px 18px;
   display:flex;
   justify-content:space-between;
-  align-items:center;
   font-weight:bold;
 }
 
-.nav button {
+.topbar button {
   background:#3b5998;
   color:white;
   border:none;
-  padding:6px 10px;
   margin-left:6px;
   cursor:pointer;
 }
@@ -57,30 +39,12 @@ body.dynamic {
 }
 
 .feed { flex:1; }
+.profile { width:260px; }
 
-.profile {
-  width:260px;
-}
-
-/* CARD */
 .card {
   background:white;
   padding:12px;
-  border-radius:4px;
-}
-
-body.dark .card,
-body.dynamic .card {
-  background:#2a2a2a;
-}
-
-/* INPUT */
-input, textarea {
-  width:100%;
-  padding:8px;
-  margin:6px 0;
-  box-sizing:border-box;
-  resize:none;
+  border-radius:5px;
 }
 
 /* POSTS */
@@ -105,13 +69,13 @@ button {
   width:auto;
 }
 
-/* DELETE (RESTORED) */
+/* DELETE */
 .delete {
   position:absolute;
   bottom:5px;
   right:5px;
-  font-size:11px;
   color:red;
+  font-size:11px;
   cursor:pointer;
 }
 
@@ -123,27 +87,16 @@ button {
   object-fit:cover;
 }
 
-.verified {
-  color:#f5c542;
-  font-weight:bold;
-}
-
-/* LOGIN */
-#loginScreen {
-  max-width:400px;
-  margin:80px auto;
-}
-
 </style>
 </head>
 
-<body class="light">
+<body>
 
 <!-- TOP BAR -->
 <div class="topbar">
   <div onclick="goHome()" style="cursor:pointer;">WUPHF</div>
 
-  <div class="nav">
+  <div>
     <button onclick="showFeed()">Feed</button>
     <button onclick="openSettings()">Settings</button>
     <button onclick="logout()">Logout</button>
@@ -151,32 +104,28 @@ button {
 </div>
 
 <!-- LOGIN -->
-<div id="loginScreen" class="card">
+<div id="login" class="card" style="max-width:400px;margin:80px auto;">
   <h2>just WUPHF it.</h2>
   <p>whenever. wherever.</p>
 
-  <input id="user">
-  <input id="pass" type="password">
+  <input id="username" placeholder="username">
+  <input id="password" type="password" placeholder="password">
 
   <button onclick="login()">Login</button>
   <button onclick="createAccount()">Create Account</button>
 
-  <div id="loginError" style="color:red;"></div>
+  <div id="error" style="color:red;"></div>
 </div>
 
 <!-- SETTINGS -->
-<div id="settingsScreen" class="card" style="display:none; max-width:500px; margin:40px auto;">
+<div id="settings" class="card" style="display:none;max-width:500px;margin:40px auto;">
   <h2>Settings</h2>
-
-  <h3>Themes</h3>
   <button onclick="setTheme('light')">Light</button>
   <button onclick="setTheme('dark')">Dark</button>
-  <button onclick="setTheme('dynamic')">Dynamic</button>
 </div>
 
 <!-- APP -->
 <div id="app" style="display:none;">
-
 <div class="container">
 
   <!-- FEED -->
@@ -194,72 +143,101 @@ button {
     <h3>Profile</h3>
 
     <img id="profilePic" class="profile-pic">
-    <input type="file" onchange="updatePic(event)">
+    <input type="file" onchange="uploadPic(event)">
 
     <p id="profileName"></p>
-    <p id="profileFollowers"></p>
+    <p id="followers"></p>
   </div>
 
 </div>
-
 </div>
 
 <script>
 
 let currentUser=null;
 
-/* NAV */
-function goHome(){
-  if(currentUser){
-    document.getElementById("app").style.display="block";
-    document.getElementById("settingsScreen").style.display="none";
-    loadFeed();
-  }
+/* USERS */
+function getUsers(){
+  return JSON.parse(localStorage.getItem("users")||"{}");
 }
 
-function showFeed(){
-  if(!currentUser) return;
-  document.getElementById("loginScreen").style.display="none";
-  document.getElementById("settingsScreen").style.display="none";
-  document.getElementById("app").style.display="block";
-  loadFeed();
+function saveUsers(u){
+  localStorage.setItem("users",JSON.stringify(u));
 }
 
-/* SETTINGS FIX */
-function openSettings(){
-  document.getElementById("app").style.display="none";
-  document.getElementById("settingsScreen").style.display="block";
-}
-
-function setTheme(t){
-  document.body.className=t;
-}
-
-/* LOGIN FIX */
+/* LOGIN (FIXED PROPERLY) */
 function login(){
-  currentUser=user.value;
+  let users=getUsers();
+  let u=username.value;
+  let p=password.value;
 
-  document.getElementById("loginScreen").style.display="none";
+  if(!users[u]){
+    error.innerText="User not found";
+    return;
+  }
+
+  if(users[u].password!==p){
+    error.innerText="Wrong password";
+    return;
+  }
+
+  currentUser=u;
+
+  document.getElementById("login").style.display="none";
   document.getElementById("app").style.display="block";
 
   loadFeed();
   loadProfile();
 }
 
+/* CREATE ACCOUNT */
+function createAccount(){
+  let users=getUsers();
+
+  users[username.value]={
+    password:password.value,
+    posts:[],
+    followers:[],
+    pic:""
+  };
+
+  saveUsers(users);
+}
+
+/* NAV */
+function showFeed(){
+  document.getElementById("settings").style.display="none";
+  document.getElementById("app").style.display="block";
+}
+
+/* SETTINGS */
+function openSettings(){
+  document.getElementById("app").style.display="none";
+  document.getElementById("settings").style.display="block";
+}
+
+function setTheme(t){
+  document.body.className=t;
+}
+
+/* HOME FIX */
+function goHome(){
+  if(currentUser){
+    document.getElementById("settings").style.display="none";
+    document.getElementById("app").style.display="block";
+  }
+}
+
 /* POSTS */
 function addPost(){
   let users=getUsers();
-
-  if(!users[currentUser]){
-    users[currentUser]={posts:[],followers:[],pic:"empty.jpg"};
-  }
 
   users[currentUser].posts.unshift({
     id:Date.now(),
     user:currentUser,
     text:postText.value,
-    time:new Date().toLocaleString(),
-    likes:0
+    likes:0,
+    time:new Date().toLocaleString()
   });
 
   saveUsers(users);
@@ -279,18 +257,18 @@ function loadFeed(){
   all.sort((a,b)=>b.id-a.id);
 
   all.forEach(p=>{
-
     let div=document.createElement("div");
     div.className="post";
 
     div.innerHTML=`
       <div class="user">@${p.user}</div>
       <div>${p.text}</div>
-      <div style="font-size:11px;color:gray;">${p.time}</div>
+      <div style="font-size:11px">${p.time}</div>
 
       <button onclick="like(${p.id})">▲ ${p.likes}</button>
 
-      ${p.user===currentUser?`<div class="delete" onclick="del(${p.id})">delete</div>`:""}
+      ${p.user===currentUser?
+        `<div class="delete" onclick="del(${p.id})">delete</div>`:""}
     `;
 
     posts.appendChild(div);
@@ -311,7 +289,7 @@ function like(id){
   loadFeed();
 }
 
-/* DELETE FIXED */
+/* DELETE */
 function del(id){
   let users=getUsers();
   users[currentUser].posts=users[currentUser].posts.filter(p=>p.id!==id);
@@ -319,27 +297,23 @@ function del(id){
   loadFeed();
 }
 
-/* PROFILE FIXED */
+/* PROFILE FIX */
 function loadProfile(){
   let users=getUsers();
-  let u=users[currentUser]||{followers:[],pic:"empty.jpg"};
+  let u=users[currentUser];
 
-  profilePic.src=u.pic;
-  profileName.innerHTML=`<b>@${currentUser}</b>`;
-  profileFollowers.innerText="Followers: "+(u.followers?.length||0);
+  profilePic.src=u.pic||"";
+  profileName.innerHTML="<b>@"+currentUser+"</b>";
+  followers.innerText="Followers: "+(u.followers?.length||0);
 }
 
-/* PROFILE PIC FIX (THIS WAS YOUR BIG BUG) */
-function updatePic(e){
+/* PROFILE PIC FIX (THIS WAS BROKEN BEFORE) */
+function uploadPic(e){
   let file=e.target.files[0];
-  if(!file) return;
-
   let r=new FileReader();
 
   r.onload=()=>{
     let users=getUsers();
-    if(!users[currentUser]) users[currentUser]={followers:[],posts:[]};
-
     users[currentUser].pic=r.result;
     saveUsers(users);
     loadProfile();
@@ -348,21 +322,7 @@ function updatePic(e){
   r.readAsDataURL(file);
 }
 
-/* STORAGE */
-function getUsers(){
-  return JSON.parse(localStorage.getItem("users")||"{}");
-}
-
-function saveUsers(u){
-  localStorage.setItem("users",JSON.stringify(u));
-}
-
-function createAccount(){
-  let users=getUsers();
-  users[user.value]={posts:[],followers:[],pic:"empty.jpg"};
-  saveUsers(users);
-}
-
+/* LOGOUT */
 function logout(){
   location.reload();
 }
