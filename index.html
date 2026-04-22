@@ -21,10 +21,16 @@ body {
   cursor:pointer;
 }
 
+/* FIXED: no duplicate display rules */
 .container {
   max-width:1050px;
   margin:20px auto;
   display:none;
+  gap:10px;
+}
+
+/* layout */
+.layout {
   display:flex;
   gap:10px;
 }
@@ -63,15 +69,25 @@ button {
 .post {
   border-top:1px solid #eee;
   padding:10px 0;
+  position:relative;
 }
 
 .follow-btn {
   font-size:11px;
-  width:auto;
   padding:3px 6px;
+  width:auto;
 }
 
 .upvote { cursor:pointer; font-size:12px; }
+
+.delete {
+  position:absolute;
+  bottom:5px;
+  right:5px;
+  font-size:11px;
+  color:red;
+  cursor:pointer;
+}
 
 .small { font-size:11px; color:#777; }
 
@@ -102,70 +118,90 @@ button {
 
 <!-- APP -->
 <div class="container" id="app">
+  <div class="layout">
 
-  <div class="sidebar card">
-    <button onclick="showTab('feed')">Feed</button>
-    <button onclick="showTab('messages')">Messages</button>
-    <button onclick="logout()">Logout</button>
+    <!-- SIDEBAR -->
+    <div class="sidebar card">
+      <button onclick="showTab('feed')">Feed</button>
+      <button onclick="showTab('messages')">Messages</button>
+      <button onclick="logout()">Logout</button>
+    </div>
+
+    <!-- FEED -->
+    <div id="feed" class="feed card">
+      <h3>Feed</h3>
+      <textarea id="postText"></textarea>
+      <button onclick="addPost()">Post</button>
+      <div id="posts"></div>
+    </div>
+
+    <!-- MESSAGES -->
+    <div id="messages" class="feed card" style="display:none;">
+      <h3>Inbox</h3>
+
+      <input id="msgUser" placeholder="Username">
+      <textarea id="msgText"></textarea>
+      <button onclick="sendMessage()">Send</button>
+
+      <div id="messageList"></div>
+      <hr>
+      <div id="chatBox"></div>
+    </div>
+
+    <!-- PROFILE -->
+    <div id="profile" class="profile card">
+      <h3>Profile</h3>
+
+      <img id="profilePic" class="profile-pic" src="empty.jpg">
+
+      <input type="file" id="profileUpload">
+      <button onclick="updateProfile()">Update</button>
+
+      <p id="profileName"></p>
+      <p id="profileFollowers"></p>
+    </div>
+
   </div>
-
-  <!-- FEED -->
-  <div id="feed" class="feed card">
-    <h3>Feed</h3>
-    <textarea id="postText"></textarea>
-    <button onclick="addPost()">Post</button>
-    <div id="posts"></div>
-  </div>
-
-  <!-- MESSAGES -->
-  <div id="messages" class="feed card" style="display:none;">
-    <h3>Inbox</h3>
-
-    <input id="msgUser" placeholder="Username">
-    <textarea id="msgText"></textarea>
-    <button onclick="sendMessage()">Send</button>
-
-    <div id="messageList"></div>
-    <div id="chatBox"></div>
-  </div>
-
-  <!-- PROFILE -->
-  <div id="profile" class="profile card">
-    <h3>Profile</h3>
-
-    <img id="profilePic" class="profile-pic" src="empty.jpg">
-
-    <input type="file" id="profileUpload">
-    <button onclick="updateProfile()">Update</button>
-
-    <p id="profileName"></p>
-    <p id="profileFollowers"></p>
-  </div>
-
 </div>
 
 <script>
-let currentUser = null;
-let viewingUser = null;
-let activeChat = null;
+let currentUser=null;
+let viewingUser=null;
 
-/* STORAGE */
+/* STORAGE SAFE */
 function getUsers(){
-  return JSON.parse(localStorage.getItem("users")||"{}");
+  let u = JSON.parse(localStorage.getItem("users")||"{}");
+
+  /* FIX: ensure every user has full structure */
+  Object.keys(u).forEach(k=>{
+    u[k].posts ||= [];
+    u[k].followers ||= [];
+    u[k].following ||= [];
+    u[k].messages ||= {};
+    u[k].pic ||= "empty.jpg";
+  });
+
+  return u;
 }
+
 function saveUsers(u){
   localStorage.setItem("users",JSON.stringify(u));
 }
 
 /* SESSION FIX */
-window.onload = () => {
-  let saved = localStorage.getItem("currentUser");
+window.onload=()=>{
+  let saved=localStorage.getItem("currentUser");
+
   if(saved){
-    currentUser = saved;
+    currentUser=saved;
     loginBox.style.display="none";
-    app.style.display="flex";
+    app.style.display="block";
+    app.classList.add("layout");
     loadFeed();
     loadProfile();
+  } else {
+    loginBox.style.display="block";
+    app.style.display="none";
   }
 };
 
@@ -195,9 +231,10 @@ function login(){
 
   currentUser=u;
   localStorage.setItem("currentUser",u);
+  saveUsers(users);
 
   loginBox.style.display="none";
-  app.style.display="flex";
+  app.style.display="block";
 
   loadFeed();
   loadProfile();
@@ -222,18 +259,11 @@ function goHome(){
   loadProfile();
 }
 
-/* VERIFIED */
-function isVerified(user){
-  let users=getUsers();
-  return (users[user]?.followers?.length||0)>=100;
-}
-
 /* FOLLOW */
 function toggleFollow(user){
   let users=getUsers();
 
-  users[currentUser].following ||= [];
-  users[user].followers ||= [];
+  if(user===currentUser) return;
 
   if(!users[currentUser].following.includes(user)){
     users[currentUser].following.push(user);
@@ -272,8 +302,9 @@ function addPost(){
 /* LIKE */
 function upvote(id){
   let users=getUsers();
+
   Object.values(users).forEach(u=>{
-    (u.posts||[]).forEach(p=>{
+    u.posts.forEach(p=>{
       if(p.id===id){
         if(!p.likes.includes(currentUser))
           p.likes.push(currentUser);
@@ -282,6 +313,20 @@ function upvote(id){
       }
     });
   });
+
+  saveUsers(users);
+  loadFeed();
+}
+
+/* DELETE FIX */
+function deletePost(id,owner){
+  if(owner!==currentUser) return;
+
+  let users=getUsers();
+
+  users[currentUser].posts =
+    users[currentUser].posts.filter(p=>p.id!==id);
+
   saveUsers(users);
   loadFeed();
 }
@@ -292,10 +337,7 @@ function loadFeed(){
   posts.innerHTML="";
 
   let all=[];
-  Object.values(users).forEach(u=>{
-    if(u.posts) all.push(...u.posts);
-  });
-
+  Object.values(users).forEach(u=>all.push(...u.posts));
   all.sort((a,b)=>b.id-a.id);
 
   all.forEach(p=>{
@@ -306,9 +348,10 @@ function loadFeed(){
       <div>
         <span class="user" onclick="openProfile('${p.user}')">
           @${p.user}
-          ${isVerified(p.user)?'<img class="verified" src="verified.png">':''}
         </span>
-        <button class="follow-btn" onclick="toggleFollow('${p.user}')">Follow</button>
+        <button class="follow-btn" onclick="toggleFollow('${p.user}')">
+          Follow
+        </button>
       </div>
 
       <div>${p.text}</div>
@@ -318,6 +361,10 @@ function loadFeed(){
       </div>
 
       <div class="small">${p.time}</div>
+
+      ${p.user===currentUser?
+        `<div class="delete" onclick="deletePost(${p.id},'${p.user}')">delete</div>`
+        :""}
     `;
 
     posts.appendChild(div);
@@ -334,30 +381,45 @@ function loadProfile(){
   let users=getUsers();
   let u=users[viewingUser||currentUser];
 
-  profileName.innerHTML =
-    "@"+(viewingUser||currentUser)+
-    (isVerified(viewingUser||currentUser)?
-      ' <img class="verified" src="verified.png">':"");
-
-  profilePic.src = u.pic || "empty.jpg";
-  profileFollowers.innerText = "Followers: " + (u.followers.length);
+  profileName.innerText="@"+(viewingUser||currentUser);
+  profilePic.src=u.pic;
+  profileFollowers.innerText="Followers: "+u.followers.length;
 }
 
-/* MESSAGES */
+/* PROFILE PIC */
+function updateProfile(){
+  let users=getUsers();
+  let file=profileUpload.files[0];
+  if(!file) return;
+
+  let r=new FileReader();
+  r.onload=e=>{
+    users[currentUser].pic=e.target.result;
+    saveUsers(users);
+    loadProfile();
+  };
+  r.readAsDataURL(file);
+}
+
+/* MESSAGES FIX (WORKS FOR ALL USERS) */
 function sendMessage(){
   let users=getUsers();
-  let to=msgUser.value;
-  let text=msgText.value;
+  let to=msgUser.value.trim();
+  let text=msgText.value.trim();
 
   if(!users[to]||!text) return;
 
   users[currentUser].messages[to] ||= [];
   users[to].messages[currentUser] ||= [];
 
-  users[currentUser].messages[to].push({from:currentUser,text});
-  users[to].messages[currentUser].push({from:currentUser,text});
+  let msg={from:currentUser,text};
+
+  users[currentUser].messages[to].push(msg);
+  users[to].messages[currentUser].push(msg);
 
   saveUsers(users);
+
+  loadInbox();
   loadChat(to);
 }
 
@@ -376,11 +438,10 @@ function loadInbox(){
 }
 
 function loadChat(user){
-  activeChat=user;
   let users=getUsers();
   chatBox.innerHTML="";
 
-  let msgs=users[currentUser].messages[user];
+  let msgs=users[currentUser].messages[user]||[];
 
   msgs.forEach(m=>{
     let div=document.createElement("div");
