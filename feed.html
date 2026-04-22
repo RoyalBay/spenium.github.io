@@ -20,22 +20,22 @@ body {
   align-items:center;
 }
 
-/* LOGO FIX */
+/* BIGGER LOGO (FIX REQUESTED) */
 .logo {
   display:flex;
   align-items:center;
-  gap:8px;
+  gap:10px;
   font-weight:bold;
-  font-size:20px;
+  font-size:22px;
 }
 
 .logo img {
-  height:30px;
+  height:42px;
   width:auto;
   object-fit:contain;
 }
 
-/* BUTTON */
+/* BUTTONS */
 button {
   background:#3b5998;
   color:white;
@@ -52,7 +52,7 @@ button {
   gap:10px;
 }
 
-/* PROFILE CARD */
+/* PROFILE CARDS */
 .profileCard {
   width:220px;
   background:white;
@@ -66,7 +66,7 @@ button {
   gap:10px;
 }
 
-/* PIC */
+/* PROFILE PIC */
 .profileHeader img {
   width:70px;
   height:70px;
@@ -74,28 +74,7 @@ button {
   object-fit:cover;
 }
 
-/* INFO */
-.profileInfo b {
-  display:block;
-}
-
-/* EXTRA SPACING FIX */
-.profileCard input {
-  margin-top:15px;
-}
-
-.profileCard button {
-  margin-top:8px;
-}
-
-/* FEED */
-.feed {
-  flex:1;
-  background:white;
-  padding:10px;
-}
-
-/* TEXTAREA FIX */
+/* TEXTAREA */
 textarea {
   width:100%;
   height:70px;
@@ -105,6 +84,12 @@ textarea {
 }
 
 /* POSTS */
+.feed {
+  flex:1;
+  background:white;
+  padding:10px;
+}
+
 .post {
   border-top:1px solid #eee;
   padding:10px;
@@ -130,12 +115,11 @@ textarea {
   font-size:11px;
 }
 
-/* POST PIC */
+/* POST IMAGE */
 .post img {
   width:30px;
   height:30px;
   border-radius:4px;
-  vertical-align:middle;
   margin-right:6px;
 }
 </style>
@@ -144,6 +128,7 @@ textarea {
 <body>
 
 <div class="topbar">
+
   <div class="logo">
     <img src="Facebook.jpg">
     <span>WUPHF</span>
@@ -153,6 +138,7 @@ textarea {
     <button onclick="goSettings()">Settings</button>
     <button onclick="logout()">Logout</button>
   </div>
+
 </div>
 
 <div class="container">
@@ -161,8 +147,8 @@ textarea {
 <div id="leftProfile" class="profileCard" style="display:none;">
   <div class="profileHeader">
     <img id="leftPic">
-    <div class="profileInfo">
-      <b id="leftName"></b>
+    <div>
+      <b id="leftName"></b><br>
       <span id="leftFollowers"></span>
     </div>
   </div>
@@ -179,77 +165,62 @@ textarea {
 <div class="profileCard">
   <div class="profileHeader">
     <img id="rightPic">
-    <div class="profileInfo">
-      <b id="rightName"></b>
+    <div>
+      <b id="rightName"></b><br>
       <span id="rightFollowers"></span>
     </div>
   </div>
-
-  <input type="file" onchange="upload(event)">
-  <button onclick="savePic()">Update Profile Picture</button>
 </div>
 
 </div>
 
 <script>
 
-/* THEME */
-function applyTheme(){
-  let t=localStorage.getItem("theme")||"light";
-  if(t==="dark") document.body.style.background="#1e1e1e";
-  else if(t==="dynamic") document.body.style.background="linear-gradient(#3b5998,#8b9dc3)";
-}
-applyTheme();
-
-let currentUser=localStorage.getItem("currentUser");
+let currentUser = localStorage.getItem("currentUser");
 if(!currentUser) location="index.html";
 
-/* STORAGE */
+/* STORAGE SAFE FIX */
 function getUsers(){
-  let u=JSON.parse(localStorage.getItem("users")||"{}");
-  Object.keys(u).forEach(k=>{
-    u[k].posts ||= [];
-    u[k].followers ||= [];
-    u[k].pic ||= "";
-  });
+  let u = JSON.parse(localStorage.getItem("users") || "{}");
+
+  for(let k in u){
+    if(!u[k].posts) u[k].posts=[];
+    if(!u[k].followers) u[k].followers=[];
+    if(!u[k].pic) u[k].pic="";
+  }
+
   return u;
 }
 
 function saveUsers(u){
-  localStorage.setItem("users",JSON.stringify(u));
+  localStorage.setItem("users", JSON.stringify(u));
+}
+
+/* NAV FIX (BROKEN ISSUE FIXED) */
+function logout(){
+  localStorage.removeItem("currentUser");
+  location.href="index.html";
+}
+
+function goSettings(){
+  location.href="settings.html";
 }
 
 /* VERIFIED */
 function verified(u){
-  return u.followers.length>=100 ? " ◆" : "";
+  return (u.followers?.length || 0) >= 100 ? " ◆" : "";
 }
 
-/* SHOW USER */
+/* PROFILE VIEW */
 function showUser(user){
   let u=getUsers();
 
+  if(!u[user]) return;
+
   leftProfile.style.display="block";
-  leftPic.src=u[user].pic||"";
-  leftName.innerHTML="@"+user+verified(u[user]);
-  leftFollowers.innerText="Followers: "+u[user].followers.length;
-}
-
-/* PROFILE PIC */
-let temp=null;
-
-function upload(e){
-  let r=new FileReader();
-  r.onload=()=>temp=r.result;
-  r.readAsDataURL(e.target.files[0]);
-}
-
-function savePic(){
-  if(!temp) return;
-
-  let u=getUsers();
-  u[currentUser].pic=temp;
-  saveUsers(u);
-  load();
+  leftPic.src=u[user].pic || "";
+  leftName.innerText="@"+user+verified(u[user]);
+  leftFollowers.innerText="Followers: "+(u[user].followers?.length || 0);
 }
 
 /* POST */
@@ -271,32 +242,36 @@ function post(){
   load();
 }
 
-/* LIKE (FIXED PROPERLY) */
+/* LIKE FIX (TRUE SINGLE-LIKE SYSTEM) */
 function like(id){
   let u=getUsers();
 
   for(let user in u){
-    u[user].posts.forEach(p=>{
-      if(p.id===id){
-        if(!p.likedBy.includes(currentUser)){
-          p.likedBy.push(currentUser);
-          p.likes = p.likedBy.length;
-        }
+    for(let p of u[user].posts){
+      if(p.id === id){
+        p.likedBy = p.likedBy || [];
+
+        if(p.likedBy.includes(currentUser)) return;
+
+        p.likedBy.push(currentUser);
+        p.likes = p.likedBy.length;
       }
-    });
+    }
   }
 
   saveUsers(u);
   load();
 }
 
-/* FOLLOW (FIXED UI UPDATE) */
+/* FOLLOW FIX */
 function follow(target){
   let u=getUsers();
-  let f=u[target].followers;
+  if(!u[target]) return;
+
+  let f = u[target].followers;
 
   if(f.includes(currentUser)){
-    u[target].followers=f.filter(x=>x!==currentUser);
+    u[target].followers = f.filter(x=>x!==currentUser);
   } else {
     f.push(currentUser);
   }
@@ -308,7 +283,7 @@ function follow(target){
 /* DELETE */
 function del(id){
   let u=getUsers();
-  u[currentUser].posts=u[currentUser].posts.filter(p=>p.id!==id);
+  u[currentUser].posts = u[currentUser].posts.filter(p=>p.id!==id);
   saveUsers(u);
   load();
 }
@@ -319,23 +294,29 @@ function load(){
   posts.innerHTML="";
 
   let all=[];
-  Object.values(u).forEach(x=>all.push(...x.posts));
+  for(let x in u){
+    all.push(...u[x].posts);
+  }
+
   all.sort((a,b)=>b.id-a.id);
 
   all.forEach(p=>{
+    let owner = u[p.user];
+    if(!owner) return;
+
+    let isFollow = owner.followers.includes(currentUser);
+
     let div=document.createElement("div");
     div.className="post";
 
-    let isFollow=u[p.user].followers.includes(currentUser);
-
     div.innerHTML=`
       <div>
-        <img src="${u[p.user].pic || ""}">
+        <img src="${owner.pic||""}">
         <span class="user" onclick="showUser('${p.user}')">
-          @${p.user}${verified(u[p.user])}
+          @${p.user}${verified(owner)}
         </span>
-        <button class="follow-btn" onclick="follow('${p.user}')">
-          ${isFollow?"Unfollow":"Follow"}
+        <button onclick="follow('${p.user}')">
+          ${isFollow ? "Unfollow" : "Follow"}
         </button>
       </div>
 
@@ -344,15 +325,15 @@ function load(){
 
       <div onclick="like(${p.id})">▲ ${p.likes}</div>
 
-      ${p.user===currentUser?`<div class="delete" onclick="del(${p.id})">delete</div>`:""}
+      ${p.user===currentUser ? `<div class="delete" onclick="del(${p.id})">delete</div>` : ""}
     `;
 
     posts.appendChild(div);
   });
 
-  rightPic.src=u[currentUser].pic||"";
-  rightName.innerHTML="@"+currentUser;
-  rightFollowers.innerText="Followers: "+u[currentUser].followers.length;
+  rightPic.src = u[currentUser].pic || "";
+  rightName.innerText = "@"+currentUser;
+  rightFollowers.innerText = "Followers: "+(u[currentUser].followers?.length || 0);
 }
 
 load();
