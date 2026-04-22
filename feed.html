@@ -8,7 +8,6 @@
 body{
   margin:0;
   font-family:Tahoma;
-  transition:0.3s;
 }
 
 /* TOP BAR */
@@ -31,6 +30,16 @@ body{
 
 .logo img{
   height:54px;
+}
+
+/* BUTTONS (RESTORED BLUE STYLE) */
+button{
+  background:#3b5998;
+  color:white;
+  border:none;
+  padding:6px;
+  cursor:pointer;
+  border-radius:2px;
 }
 
 /* LAYOUT */
@@ -66,7 +75,6 @@ body{
   padding:10px;
 }
 
-/* TEXTAREA */
 textarea{
   width:100%;
   height:70px;
@@ -79,6 +87,7 @@ textarea{
 .post{
   border-top:1px solid #eee;
   padding:10px;
+  position:relative;
 }
 
 .user{
@@ -92,16 +101,20 @@ textarea{
   font-size:11px;
 }
 
+/* DELETE FIX (NO LINE THROUGH + PROPER ALIGNMENT) */
 .delete{
-  float:right;
+  position:absolute;
+  right:6px;
+  bottom:6px;
   color:red;
   cursor:pointer;
+  text-decoration:none;
 }
 
-/* ICON ROW */
+/* LIKE */
 .icon{
   cursor:pointer;
-  color:#333;
+  margin-top:5px;
 }
 </style>
 </head>
@@ -143,6 +156,10 @@ textarea{
   <img id="rightPic">
   <b id="rightName"></b><br>
   <span id="rightFollowers"></span>
+
+  <!-- PROFILE UPLOAD FIX RESTORED -->
+  <input type="file" accept="image/*" onchange="updatePic(event)">
+  <button onclick="updatePic()">Update Profile Picture</button>
 </div>
 
 </div>
@@ -152,7 +169,7 @@ textarea{
 let currentUser = localStorage.getItem("currentUser");
 if(!currentUser) location.href="index.html";
 
-/* STORAGE */
+/* USERS */
 function getUsers(){
   let u = JSON.parse(localStorage.getItem("users") || "{}");
 
@@ -184,7 +201,7 @@ function verified(u){
   return (u.followers?.length || 0) >= 100 ? " ◆" : "";
 }
 
-/* SHOW PROFILE */
+/* PROFILE VIEW */
 function showUser(user){
   let u=getUsers();
   if(!u[user]) return;
@@ -214,7 +231,7 @@ function post(){
   load();
 }
 
-/* LIKE / UNLIKE FIX */
+/* LIKE / UNLIKE */
 function like(id){
   let u=getUsers();
 
@@ -239,12 +256,14 @@ function like(id){
   load();
 }
 
-/* FOLLOW / UNFOLLOW */
+/* FOLLOW / UNFOLLOW FIX */
 function follow(target){
   let u=getUsers();
   if(!u[target]) return;
 
-  let f=u[target].followers;
+  u[target].followers ||= [];
+
+  let f = u[target].followers;
 
   if(f.includes(currentUser)){
     u[target].followers = f.filter(x=>x!==currentUser);
@@ -264,7 +283,24 @@ function del(id){
   load();
 }
 
-/* LOAD FEED */
+/* PROFILE UPLOAD FIX */
+function updatePic(e){
+  let file = e?.target?.files?.[0];
+  if(!file) return;
+
+  let reader = new FileReader();
+
+  reader.onload = function(){
+    let u=getUsers();
+    u[currentUser].pic = reader.result;
+    saveUsers(u);
+    load();
+  };
+
+  reader.readAsDataURL(file);
+}
+
+/* LOAD */
 function load(){
   let u=getUsers();
   posts.innerHTML="";
@@ -280,22 +316,20 @@ function load(){
     let owner=u[p.user];
     if(!owner) return;
 
-    let liked = (p.likedBy||[]).includes(currentUser);
     let isFollow = owner.followers.includes(currentUser);
+    let liked = (p.likedBy||[]).includes(currentUser);
 
     let div=document.createElement("div");
     div.className="post";
 
     div.innerHTML=`
-      <div>
-        <span class="user" onclick="showUser('${p.user}')">
-          @${p.user}${verified(owner)}
-        </span>
+      <span class="user" onclick="showUser('${p.user}')">
+        @${p.user}${verified(owner)}
+      </span>
 
-        <button class="follow-btn" onclick="follow('${p.user}')">
-          ${isFollow ? "Unfollow" : "Follow"}
-        </button>
-      </div>
+      <button class="follow-btn" onclick="follow('${p.user}')">
+        ${isFollow ? "Unfollow" : "Follow"}
+      </button>
 
       <div>${p.text}</div>
       <div style="font-size:11px;color:#777;">${p.time}</div>
