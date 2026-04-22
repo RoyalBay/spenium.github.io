@@ -18,6 +18,15 @@ body {
   padding:12px 18px;
   font-size:22px;
   font-weight:bold;
+}
+
+#logoutBtn {
+  float:right;
+  width:auto;
+  padding:5px 10px;
+  background:#2d4373;
+  color:white;
+  border:none;
   cursor:pointer;
 }
 
@@ -67,6 +76,13 @@ button {
   margin-top:5px;
 }
 
+.follow-btn {
+  width:auto;
+  font-size:11px;
+  padding:2px 6px;
+  margin:5px 0;
+}
+
 .user {
   color:#3b5998;
   font-weight:bold;
@@ -94,12 +110,20 @@ button {
   object-fit:cover;
   border-radius:6px;
 }
+
+.verified {
+  width:14px;
+  vertical-align:middle;
+}
 </style>
 </head>
 
 <body>
 
-<div class="topbar" onclick="goHome()">WUPHF</div>
+<div class="topbar">
+  WUPHF
+  <button id="logoutBtn" onclick="logout()">Logout</button>
+</div>
 
 <!-- WELCOME -->
 <div id="welcome" class="screen center card" style="display:block;">
@@ -130,13 +154,11 @@ button {
 
 <!-- APP -->
 <div id="app" class="screen">
-
   <div class="container">
 
     <div class="sidebar card">
       <button onclick="showTab('feed')">Feed</button>
       <button onclick="showTab('messages')">Messages</button>
-      <button onclick="logout()">Logout</button>
     </div>
 
     <!-- FEED -->
@@ -170,7 +192,6 @@ button {
       <p id="profileFollowers"></p>
 
       <div id="followArea"></div>
-      <div id="verifyArea"></div>
     </div>
 
   </div>
@@ -228,6 +249,13 @@ function saveUsers(u){
   localStorage.setItem("users",JSON.stringify(u));
 }
 
+/* VERIFY CHECK */
+function checkVerification(user){
+  let users=getUsers();
+  users[user].verified = users[user].followers.length >= 100;
+  saveUsers(users);
+}
+
 /* LOGIN */
 function login(){
   let users=getUsers();
@@ -236,18 +264,10 @@ function login(){
 
   loginError.innerText="";
 
-  if(!users[u]){
-    loginError.innerText="Incorrect username";
-    return;
-  }
-
-  if(users[u].password!==p){
-    loginError.innerText="Incorrect password";
-    return;
-  }
+  if(!users[u]) return loginError.innerText="Incorrect username";
+  if(users[u].password!==p) return loginError.innerText="Incorrect password";
 
   currentUser=u;
-
   showScreen("app");
   showTab("feed");
 }
@@ -258,23 +278,12 @@ function createAccount(){
   let u=signupUser.value.trim();
   let p=signupPass.value;
 
-  if(users[u]){
-    signupError.innerText="Username already exists";
-    return;
-  }
+  if(users[u]) return signupError.innerText="Username already exists";
 
-  users[u]={
-    password:p,
-    posts:[],
-    followers:[],
-    following:[],
-    messages:{},
-    pic:"empty.jpg",
-    verified:false
-  };
+  users[u]={password:p,posts:[],followers:[],following:[],messages:{},pic:"empty.jpg",verified:false};
 
   saveUsers(users);
-  signupError.innerText="Account created. Login.";
+  signupError.innerText="Account created.";
 }
 
 /* POSTS */
@@ -305,7 +314,17 @@ function loadFeed(){
   all.sort((a,b)=>b.id-a.id);
 
   all.forEach(p=>{
-    let verified = users[p.user].verified ? "✔️" : "";
+    let verified = users[p.user].verified 
+      ? `<img src="verify.png" class="verified">` : "";
+
+    let isFollowing = users[currentUser].following.includes(p.user);
+
+    let followBtn = "";
+    if(p.user !== currentUser){
+      followBtn = `<button class="follow-btn" onclick="toggleFollow('${p.user}')">
+        ${isFollowing ? "Unfollow" : "Follow"}
+      </button>`;
+    }
 
     let div=document.createElement("div");
     div.className="post";
@@ -314,8 +333,12 @@ function loadFeed(){
       <div class="user" onclick="openProfile('${p.user}')">
         @${p.user} ${verified}
       </div>
+
+      ${followBtn}
+
       <div>${p.text}</div>
       <div style="font-size:11px;color:#777;">${p.time}</div>
+
       ${p.user===currentUser?`<div class="delete" onclick="deletePost(${p.id})">delete</div>`:""}
     `;
 
@@ -341,13 +364,14 @@ function loadProfile(){
 
   profilePic.src=u.pic;
 
-  profileName.innerHTML=`<b>@${user}</b> ${u.verified?"✔️":""}`;
+  profileName.innerHTML=`<b>@${user}</b> ${
+    u.verified ? '<img src="verify.png" class="verified">' : ''
+  }`;
+
   profileFollowers.innerText="Followers: "+u.followers.length;
 
   followArea.innerHTML="";
-  verifyArea.innerHTML="";
 
-  // FOLLOW
   if(user!==currentUser){
     let isFollowing=users[currentUser].following.includes(user);
 
@@ -356,22 +380,6 @@ function loadProfile(){
     btn.onclick=()=>toggleFollow(user);
 
     followArea.appendChild(btn);
-  }
-
-  // VERIFY BUTTON
-  if(user===currentUser){
-    let vBtn=document.createElement("button");
-    vBtn.innerText = u.verified ? "Unverify Account" : "Verify Account";
-
-    vBtn.onclick=()=>{
-      let users=getUsers();
-      users[currentUser].verified=!users[currentUser].verified;
-      saveUsers(users);
-      loadProfile();
-      loadFeed();
-    };
-
-    verifyArea.appendChild(vBtn);
   }
 }
 
@@ -389,8 +397,11 @@ function toggleFollow(user){
     them.followers.push(currentUser);
   }
 
+  checkVerification(user);
+
   saveUsers(users);
   loadProfile();
+  loadFeed();
 }
 
 /* PROFILE PIC */
