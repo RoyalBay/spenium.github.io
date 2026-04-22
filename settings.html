@@ -1,119 +1,50 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WUPHF Settings</title>
-
+<title>Settings</title>
 <style>
-body {
-  margin:0;
-  font-family: Tahoma, Arial, sans-serif;
-  background: linear-gradient(#dfe7f3, #f5f6f7);
-}
-
-/* TOP BAR */
-.topbar {
-  background:#3b5998;
-  color:white;
-  padding:12px 16px;
-  display:flex;
-  justify-content:space-between;
-  font-weight:bold;
-}
-
-.topbar button {
-  background:#3b5998;
-  color:white;
-  border:none;
-  cursor:pointer;
-}
-
-/* CARD */
-.card {
-  max-width:500px;
-  margin:40px auto;
-  background:white;
-  padding:15px;
-  border-radius:5px;
-}
-
-/* BUTTONS */
-button {
-  background:#3b5998;
-  color:white;
-  border:none;
-  padding:10px;
-  cursor:pointer;
-  margin:5px 0;
-  width:100%;
-}
-
-/* HEADER */
-h3 {
-  margin-top:0;
-}
-
-.small {
-  font-size:12px;
-  color:#666;
-}
-
+body{font-family:Tahoma;margin:0;}
+.topbar{background:#3b5998;color:white;padding:12px;display:flex;justify-content:space-between;}
+.card{max-width:400px;margin:40px auto;background:white;padding:15px;}
+button{background:#3b5998;color:white;border:none;padding:8px;width:100%;margin-top:6px;}
 </style>
 </head>
 
 <body>
 
-<!-- TOP BAR -->
 <div class="topbar">
-  <div onclick="go('feed.html')" style="cursor:pointer;">WUPHF</div>
+  <div onclick="location='feed.html'">WUPHF</div>
   <div>
-    <button onclick="go('feed.html')">Feed</button>
-    <button onclick="go('profile.html')">Profile</button>
-    <button onclick="logout()">Logout</button>
+    <button onclick="location='feed.html'">Feed</button>
+    <button onclick="location='profile.html'">Profile</button>
   </div>
 </div>
 
-<!-- SETTINGS -->
 <div class="card">
+<h3>Themes</h3>
 
-  <h3>Themes</h3>
-  <p class="small">Choose your display style</p>
+<button onclick="setTheme('light')">Light</button>
+<button onclick="setTheme('dark')">Dark</button>
+<button onclick="setTheme('dynamic')">Dynamic</button>
 
-  <button onclick="setTheme('light')">Light</button>
-  <button onclick="setTheme('dark')">Dark</button>
-  <button onclick="setTheme('dynamic')">Dynamic</button>
-
-  <hr>
-
-  <p class="small">More settings coming soon</p>
-
+<p>More settings coming soon</p>
 </div>
 
 <script>
 
-function go(page){
-  window.location.href = page;
-}
-
-function logout(){
-  localStorage.removeItem("currentUser");
-  window.location.href = "index.html";
-}
-
-/* THEME SYSTEM (GLOBAL FIX) */
 function setTheme(t){
-  localStorage.setItem("theme", t);
+  localStorage.setItem("theme",t);
   applyTheme();
 }
 
 function applyTheme(){
-  let t = localStorage.getItem("theme") || "light";
+  let t=localStorage.getItem("theme")||"light";
 
-  document.body.className = t;
+  if(t==="dark") document.body.style.background="#1e1e1e";
+  else if(t==="dynamic") document.body.style.background="linear-gradient(#3b5998,#8b9dc3)";
+  else document.body.style.background="linear-gradient(#dfe7f3,#f5f6f7)";
 }
 
-/* APPLY ON LOAD */
 applyTheme();
 
 </script>
