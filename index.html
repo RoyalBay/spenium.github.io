@@ -1,150 +1,153 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WUPHF Login</title>
+<title>WUPHF</title>
 
 <style>
-body {
+body{
   margin:0;
-  font-family: Tahoma, Arial, sans-serif;
-  background: linear-gradient(#dfe7f3, #f5f6f7);
+  font-family:Tahoma;
+  background:linear-gradient(#dfe7f3,#f5f6f7);
 }
 
-/* CENTER CARD */
-.card {
+/* TOP BAR */
+.topbar{
+  background:#3b5998;
+  color:white;
+  padding:12px;
+  font-weight:bold;
+}
+
+/* CARD */
+.card{
   max-width:420px;
   margin:80px auto;
   background:white;
-  padding:16px;
-  border-radius:5px;
+  padding:15px;
 }
 
 /* INPUTS */
-input {
+input{
   width:100%;
   padding:10px;
-  margin:6px 0;
+  margin:5px 0;
   box-sizing:border-box;
 }
 
-/* BUTTONS (KEEP OLD STYLE) */
-button {
+/* BUTTONS */
+button{
   width:100%;
   padding:10px;
   background:#3b5998;
   color:white;
   border:none;
-  cursor:pointer;
   margin-top:6px;
+  cursor:pointer;
 }
 
-/* HEADER TEXT */
-h2 {
-  margin:0 0 5px 0;
-}
-
-.sub {
-  margin:0 0 15px 0;
-  color:#666;
-  font-size:13px;
-}
-
-/* ERROR */
-#error {
-  color:red;
-  font-size:12px;
-  margin-top:8px;
-}
+/* HIDDEN SCREEN */
+.hidden{display:none;}
 </style>
 </head>
 
 <body>
 
-<div class="card">
-  <h2>just WUPHF it.</h2>
-  <p class="sub">whenever. wherever.</p>
+<div class="topbar">WUPHF</div>
 
-  <!-- LOGIN -->
+<!-- LOGIN SCREEN -->
+<div id="login" class="card">
   <h3>Login</h3>
-  <input id="loginUser" placeholder="username">
-  <input id="loginPass" type="password" placeholder="password">
+
+  <input id="l_user" placeholder="username">
+  <input id="l_pass" type="password" placeholder="password">
+
   <button onclick="login()">Login</button>
+  <button onclick="showSignup()">Create Account</button>
 
-  <hr>
+  <p id="err" style="color:red;"></p>
+</div>
 
-  <!-- SIGNUP -->
+<!-- SIGNUP SCREEN -->
+<div id="signup" class="card hidden">
   <h3>Create Account</h3>
-  <input id="newUser" placeholder="choose username">
-  <input id="newPass" type="password" placeholder="choose password">
-  <button onclick="signup()">Sign Up</button>
 
-  <div id="error"></div>
+  <input id="s_user" placeholder="username">
+  <input id="s_pass" type="password" placeholder="password">
+
+  <button onclick="signup()">Create</button>
+  <button onclick="back()">Back</button>
+
+  <p id="err2" style="color:red;"></p>
 </div>
 
 <script>
 
-/* SAFE USER STORAGE */
 function getUsers(){
-  return JSON.parse(localStorage.getItem("users") || "{}");
+  return JSON.parse(localStorage.getItem("users")||"{}");
+}
+function saveUsers(u){
+  localStorage.setItem("users",JSON.stringify(u));
 }
 
-function saveUsers(users){
-  localStorage.setItem("users", JSON.stringify(users));
-}
-
-/* LOGIN (FIXED PROPERLY) */
+/* LOGIN FIX */
 function login(){
-  let users = getUsers();
+  let u=getUsers();
 
-  let u = loginUser.value.trim();
-  let p = loginPass.value;
+  let name=l_user.value.trim();
+  let pass=l_pass.value;
 
-  if(!users[u]){
-    error.innerText = "User not found";
+  if(!u[name]){
+    err.innerText="User not found";
     return;
   }
 
-  if(users[u].password !== p){
-    error.innerText = "Wrong password";
+  if(u[name].password!==pass){
+    err.innerText="Wrong password";
     return;
   }
 
-  // STORE SESSION
-  localStorage.setItem("currentUser", u);
-
-  // GO TO FEED
-  window.location.href = "feed.html";
+  localStorage.setItem("currentUser",name);
+  window.location.href="feed.html";
 }
 
-/* SIGNUP */
+/* SWITCH SCREEN */
+function showSignup(){
+  login.classList.add("hidden");
+  signup.classList.remove("hidden");
+}
+
+function back(){
+  signup.classList.add("hidden");
+  login.classList.remove("hidden");
+}
+
+/* CREATE ACCOUNT */
 function signup(){
-  let users = getUsers();
+  let u=getUsers();
 
-  let u = newUser.value.trim();
-  let p = newPass.value;
+  let name=s_user.value.trim();
+  let pass=s_pass.value;
 
-  if(!u || !p){
-    error.innerText = "Fill in all fields";
+  if(!name||!pass){
+    err2.innerText="fill all fields";
     return;
   }
 
-  if(users[u]){
-    error.innerText = "Username already exists";
+  if(u[name]){
+    err2.innerText="username exists";
     return;
   }
 
-  users[u] = {
-    password: p,
-    posts: [],
-    followers: [],
-    pic: ""
+  u[name]={
+    password:pass,
+    posts:[],
+    followers:[],
+    pic:""
   };
 
-  saveUsers(users);
-
-  error.innerText = "Account created. Now log in.";
+  saveUsers(u);
+  back();
 }
 
 </script>
