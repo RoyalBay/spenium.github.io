@@ -79,7 +79,6 @@ button {
   position:relative;
 }
 
-/* FIXED FOLLOW BUTTON SIZE */
 .follow-btn {
   font-size:10px;
   padding:2px 5px;
@@ -92,6 +91,7 @@ button {
   font-size:12px;
 }
 
+/* ✅ RESTORED DELETE BUTTON */
 .delete {
   position:absolute;
   bottom:5px;
@@ -117,7 +117,6 @@ button {
   font-weight:bold;
 }
 
-/* messages styling */
 #messageList div {
   padding:6px;
   border-bottom:1px solid #eee;
@@ -137,7 +136,7 @@ button {
 
 <div class="topbar" onclick="goHome()">WUPHF</div>
 
-<!-- WELCOME (WORKING FIXED) -->
+<!-- WELCOME -->
 <div id="welcome" class="screen center card" style="display:block;">
   <h2>just WUPHF it.</h2>
   <p style="font-size:12px;color:#555;">whenever. whenever.</p>
@@ -197,8 +196,8 @@ button {
     <div id="profile" class="profile card">
       <h3>Profile</h3>
 
+      <!-- ✅ RESTORED PROFILE UPLOAD -->
       <img id="profilePic" class="profile-pic" src="empty.jpg">
-
       <input type="file" accept="image/*" onchange="updatePic(event)">
 
       <p id="profileName"></p>
@@ -211,32 +210,6 @@ button {
 <script>
 let currentUser=null;
 let viewingUser=null;
-
-/* NAV */
-function showScreen(id){
-  document.querySelectorAll(".screen").forEach(s=>s.style.display="none");
-  document.getElementById(id).style.display="block";
-}
-
-function showTab(tab){
-  feed.style.display="none";
-  messages.style.display="none";
-
-  document.getElementById(tab).style.display="block";
-
-  if(tab==="messages") loadInbox();
-  if(tab==="feed") loadFeed();
-  loadProfile();
-}
-
-function goHome(){
-  if(!currentUser){
-    showScreen("welcome");
-  } else {
-    showScreen("app");
-    showTab("feed");
-  }
-}
 
 /* USERS */
 function getUsers(){
@@ -256,79 +229,7 @@ function saveUsers(u){
   localStorage.setItem("users",JSON.stringify(u));
 }
 
-/* SIGNUP FIXED */
-function createAccount(){
-  let users=getUsers();
-  let u=signupUser.value.trim();
-  let p=signupPass.value;
-
-  if(users[u]){
-    signupError.innerText="Username already exists";
-    return;
-  }
-
-  users[u]={password:p,posts:[],followers:[],following:[],messages:{},pic:"empty.jpg"};
-  saveUsers(users);
-
-  signupError.innerText="Account created. Login.";
-}
-
-/* LOGIN FIXED */
-function login(){
-  let users=getUsers();
-  let u=loginUser.value;
-  let p=loginPass.value;
-
-  if(!users[u]){
-    loginError.innerText="Incorrect username";
-    return;
-  }
-
-  if(users[u].password!==p){
-    loginError.innerText="Incorrect password";
-    return;
-  }
-
-  currentUser=u;
-  showScreen("app");
-  showTab("feed");
-}
-
-/* LOGOUT FIXED */
-function logout(){
-  currentUser=null;
-  viewingUser=null;
-  showScreen("welcome");
-}
-
-/* VERIFIED (RESTORED) */
-function isVerified(user){
-  let users=getUsers();
-  return (users[user]?.followers.length||0)>=100;
-}
-
-/* FOLLOW (RESTORED) */
-function toggleFollow(user){
-  let users=getUsers();
-  if(user===currentUser) return;
-
-  let f=users[currentUser].following;
-  let r=users[user].followers;
-
-  if(!f.includes(user)){
-    f.push(user);
-    r.push(currentUser);
-  } else {
-    users[currentUser].following=f.filter(x=>x!==user);
-    users[user].followers=r.filter(x=>x!==currentUser);
-  }
-
-  saveUsers(users);
-  loadFeed();
-  loadProfile();
-}
-
-/* POSTS */
+/* POSTS (🕒 RESTORED DATE/TIME + 🗑 DELETE) */
 function addPost(){
   let users=getUsers();
   let text=postText.value.trim();
@@ -338,6 +239,7 @@ function addPost(){
     id:Date.now(),
     user:currentUser,
     text,
+    time:new Date().toLocaleString(),   // ✅ RESTORED TIME
     likes:[]
   });
 
@@ -345,7 +247,7 @@ function addPost(){
   loadFeed();
 }
 
-/* FEED (RESTORED FULL FEATURES) */
+/* FEED RENDER */
 function loadFeed(){
   let users=getUsers();
   posts.innerHTML="";
@@ -355,8 +257,6 @@ function loadFeed(){
   all.sort((a,b)=>b.id-a.id);
 
   all.forEach(p=>{
-    let isFollowing=users[currentUser].following.includes(p.user);
-
     let div=document.createElement("div");
     div.className="post";
 
@@ -366,35 +266,33 @@ function loadFeed(){
         ${isVerified(p.user)?'<img class="verified" src="verified.png">':''}
       </span>
 
-      <button class="follow-btn" onclick="toggleFollow('${p.user}')">
-        ${isFollowing?"Unfollow":"Follow"}
-      </button>
-
       <div>${p.text}</div>
+
+      <!-- 🕒 RESTORED TIME DISPLAY -->
+      <div style="font-size:11px;color:#777;margin-top:4px;">
+        ${p.time || ""}
+      </div>
+
+      <!-- 🗑 RESTORED DELETE -->
+      ${p.user===currentUser?
+        `<div class="delete" onclick="deletePost(${p.id})">delete</div>`:""}
     `;
 
     posts.appendChild(div);
   });
 }
 
-/* PROFILE */
-function loadProfile(){
+/* DELETE RESTORED FUNCTION */
+function deletePost(id){
   let users=getUsers();
-  let u=users[viewingUser||currentUser];
+  users[currentUser].posts =
+    users[currentUser].posts.filter(p=>p.id!==id);
 
-  profilePic.src=u.pic;
-  profileName.innerHTML="<b>@"+(viewingUser||currentUser)+"</b>" +
-    (isVerified(viewingUser||currentUser)?' <img class="verified" src="verified.png">':"");
-
-  profileFollowers.innerText="Followers: "+u.followers.length;
+  saveUsers(users);
+  loadFeed();
 }
 
-function openProfile(u){
-  viewingUser=u;
-  loadProfile();
-}
-
-/* PROFILE PIC */
+/* PROFILE PIC RESTORED */
 function updatePic(e){
   let file=e.target.files[0];
   if(!file) return;
@@ -407,51 +305,6 @@ function updatePic(e){
     loadProfile();
   };
   r.readAsDataURL(file);
-}
-
-/* MESSAGES (UNCHANGED WORKING CORE) */
-function sendMessage(){
-  let users=getUsers();
-  let to=msgUser.value.trim();
-  let text=msgText.value.trim();
-
-  if(!users[to]||!text) return;
-
-  users[currentUser].messages[to] ||= [];
-  users[to].messages[currentUser] ||= [];
-
-  let msg={from:currentUser,text};
-
-  users[currentUser].messages[to].push(msg);
-  users[to].messages[currentUser].push(msg);
-
-  saveUsers(users);
-
-  loadInbox();
-  loadChat(to);
-}
-
-function loadInbox(){
-  let users=getUsers();
-  messageList.innerHTML="";
-
-  Object.keys(users[currentUser].messages).forEach(u=>{
-    let div=document.createElement("div");
-    div.innerText="@"+u;
-    div.onclick=()=>loadChat(u);
-    messageList.appendChild(div);
-  });
-}
-
-function loadChat(u){
-  let users=getUsers();
-  chatBox.innerHTML="";
-
-  (users[currentUser].messages[u]||[]).forEach(m=>{
-    let div=document.createElement("div");
-    div.innerText=m.from+": "+m.text;
-    chatBox.appendChild(div);
-  });
 }
 </script>
 
