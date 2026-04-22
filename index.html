@@ -7,7 +7,7 @@
 
 <style>
 
-/* ===== THEMES ===== */
+/* THEMES */
 body.light {
   margin:0;
   font-family:Tahoma;
@@ -28,52 +28,53 @@ body.dynamic {
   color:white;
 }
 
-/* ===== TOP BAR ===== */
+/* TOP BAR */
 .topbar {
   background:#3b5998;
   color:white;
   padding:12px 18px;
-  font-size:22px;
-  font-weight:bold;
-  cursor:pointer;
   display:flex;
   justify-content:space-between;
   align-items:center;
+  font-weight:bold;
 }
 
-#logoutBtn {
+.nav-buttons button {
   width:auto;
+  margin-right:6px;
   padding:5px 10px;
   background:#2d4373;
-  border:none;
   color:white;
+  border:none;
   cursor:pointer;
 }
 
-/* ===== LAYOUT ===== */
+/* LAYOUT */
 .screen { display:none; }
 
-.center {
-  max-width:420px;
-  margin:80px auto;
-}
-
 .container {
-  max-width:1050px;
-  margin:20px auto;
   display:flex;
   gap:10px;
+  max-width:1400px;
+  margin:20px auto;
 }
 
-.sidebar { width:150px; }
-.feed { width:580px; }
-.profile { width:250px; }
+/* WIDE FEED */
+.feed {
+  flex:1;
+  min-height:600px;
+}
 
+/* PROFILE RIGHT */
+.profile {
+  width:260px;
+}
+
+/* CARD */
 .card {
   background:white;
   padding:12px;
   border-radius:4px;
-  margin-bottom:10px;
 }
 
 body.dark .card,
@@ -81,28 +82,18 @@ body.dynamic .card {
   background:#2a2a2a;
 }
 
-/* ===== INPUT FIX (NO RESIZE BUG) ===== */
+/* INPUT FIX */
 input, textarea {
   width:100%;
   padding:8px;
   margin:6px 0;
-  border:1px solid #ccc;
   border-radius:3px;
+  border:1px solid #ccc;
   box-sizing:border-box;
   resize:none;
 }
 
-/* ===== BUTTONS (RESTORED NORMAL LOOK) ===== */
-button {
-  padding:6px 10px;
-  background:#3b5998;
-  color:white;
-  border:none;
-  cursor:pointer;
-  width:auto;
-}
-
-/* ===== POSTS ===== */
+/* POSTS */
 .post {
   border-top:1px solid #ddd;
   padding:10px 0;
@@ -111,8 +102,8 @@ button {
 
 .user-row {
   display:flex;
+  justify-content:space-between;
   align-items:center;
-  gap:10px;
 }
 
 .user {
@@ -121,21 +112,20 @@ button {
   cursor:pointer;
 }
 
-/* follow beside name */
 .follow-btn {
   width:auto;
   font-size:11px;
   padding:3px 6px;
 }
 
-/* like button */
+/* LIKE */
 .like-btn {
   width:auto;
   font-size:12px;
   margin-top:6px;
 }
 
-/* delete restored */
+/* DELETE */
 .delete {
   position:absolute;
   bottom:5px;
@@ -145,26 +135,20 @@ button {
   cursor:pointer;
 }
 
-/* ===== PROFILE ===== */
+/* PROFILE */
 .profile-pic {
   width:90px;
   height:90px;
-  object-fit:cover;
   border-radius:6px;
+  object-fit:cover;
 }
 
-/* bold names fix */
-.profile-name {
-  font-weight:bold;
-}
-
-/* verified symbol */
 .verified {
   font-weight:bold;
   color:#f5c542;
 }
 
-/* ===== SETTINGS PAGE ===== */
+/* SETTINGS PAGE */
 .settings-page {
   display:none;
   max-width:600px;
@@ -188,13 +172,19 @@ body.dynamic .settings-card {
 <body class="light">
 
 <!-- TOP BAR -->
-<div class="topbar" onclick="goHome()">
-  WUPHF
-  <button id="logoutBtn" onclick="logout()">Logout</button>
+<div class="topbar">
+  <div>WUPHF</div>
+
+  <div class="nav-buttons">
+    <button onclick="showTab('feed')">Feed</button>
+    <button onclick="showTab('messages')">Messages</button>
+    <button onclick="openSettings()">Settings</button>
+    <button onclick="logout()">Logout</button>
+  </div>
 </div>
 
 <!-- WELCOME -->
-<div id="welcome" class="screen center card" style="display:block;">
+<div id="welcome" class="screen card" style="display:block; max-width:400px; margin:80px auto;">
   <h2>just WUPHF it.</h2>
   <p>whenever. wherever.</p>
   <button onclick="showScreen('login')">Login</button>
@@ -202,7 +192,7 @@ body.dynamic .settings-card {
 </div>
 
 <!-- LOGIN -->
-<div id="login" class="screen center card">
+<div id="login" class="screen card" style="max-width:400px; margin:80px auto;">
   <h3>Login</h3>
   <input id="loginUser">
   <input id="loginPass" type="password">
@@ -211,7 +201,7 @@ body.dynamic .settings-card {
 </div>
 
 <!-- SIGNUP -->
-<div id="signup" class="screen center card">
+<div id="signup" class="screen card" style="max-width:400px; margin:80px auto;">
   <h3>Create Account</h3>
   <input id="signupUser">
   <input id="signupPass" type="password">
@@ -219,7 +209,7 @@ body.dynamic .settings-card {
   <button onclick="createAccount()">Create</button>
 </div>
 
-<!-- SETTINGS PAGE (FULL SCREEN STYLE) -->
+<!-- SETTINGS PAGE -->
 <div id="settingsPage" class="settings-page">
   <div class="settings-card">
     <h2>Settings</h2>
@@ -229,7 +219,6 @@ body.dynamic .settings-card {
     <button onclick="setTheme('dark')">Dark</button>
     <button onclick="setTheme('dynamic')">Dynamic</button>
 
-    <br><br>
     <p>More settings coming soon.</p>
 
     <button onclick="exitSettings()">Back</button>
@@ -240,12 +229,6 @@ body.dynamic .settings-card {
 <div id="app" class="screen">
 <div class="container">
 
-  <div class="sidebar card">
-    <button onclick="showTab('feed')">Feed</button>
-    <button onclick="showTab('messages')">Messages</button>
-    <button onclick="openSettings()">Settings</button>
-  </div>
-
   <!-- FEED -->
   <div id="feed" class="feed card">
     <h3>Feed</h3>
@@ -254,54 +237,39 @@ body.dynamic .settings-card {
     <div id="posts"></div>
   </div>
 
-  <!-- MESSAGES -->
-  <div id="messages" class="feed card" style="display:none;">
-    <h3>Messages</h3>
-    <input id="msgUser">
-    <textarea id="msgText"></textarea>
-    <button onclick="sendMessage()">Send</button>
-    <div id="messageList"></div>
-    <div id="chatBox"></div>
-  </div>
-
   <!-- PROFILE -->
   <div id="profile" class="profile card">
     <h3>Profile</h3>
 
     <img id="profilePic" class="profile-pic" src="empty.jpg">
     <input type="file" onchange="updatePic(event)">
+
     <button onclick="refreshProfile()">Update Profile</button>
 
     <p id="profileName"></p>
     <p id="profileFollowers"></p>
-
-    <div id="followArea"></div>
   </div>
 
 </div>
+
+<!-- MESSAGES -->
+<div id="messages" class="card" style="display:none; max-width:900px; margin:20px auto;">
+  <h3>Messages</h3>
+  <input id="msgUser">
+  <textarea id="msgText"></textarea>
+  <button onclick="sendMessage()">Send</button>
+
+  <div id="messageList"></div>
+  <div id="chatBox"></div>
+</div>
+
 </div>
 
 <script>
 
 let currentUser=null;
 let viewingUser=null;
-
-/* THEME */
-function setTheme(t){
-  document.body.className=t;
-  localStorage.setItem("theme",t);
-}
-
-/* SETTINGS PAGE */
-function openSettings(){
-  document.getElementById("app").style.display="none";
-  document.getElementById("settingsPage").style.display="block";
-}
-
-function exitSettings(){
-  document.getElementById("settingsPage").style.display="none";
-  document.getElementById("app").style.display="block";
-}
+let likedMap={}; // prevents multi-like per user
 
 /* NAV */
 function showScreen(id){
@@ -310,20 +278,27 @@ function showScreen(id){
 }
 
 function showTab(tab){
-  feed.style.display="none";
+  feed.style.display="block";
   messages.style.display="none";
-  document.getElementById(tab).style.display="block";
+
+  if(tab==="messages"){
+    feed.style.display="none";
+    messages.style.display="block";
+    loadInbox();
+  }
+
   if(tab==="feed") loadFeed();
-  if(tab==="messages") loadInbox();
   loadProfile();
 }
 
-function goHome(){
-  if(currentUser){
-    viewingUser=null;
-    showScreen("app");
-    showTab("feed");
-  } else showScreen("welcome");
+/* SETTINGS */
+function openSettings(){
+  document.getElementById("app").style.display="none";
+  document.getElementById("settingsPage").style.display="block";
+}
+function exitSettings(){
+  document.getElementById("settingsPage").style.display="none";
+  document.getElementById("app").style.display="block";
 }
 
 /* STORAGE */
@@ -355,18 +330,6 @@ function login(){
   currentUser=u;
   showScreen("app");
   showTab("feed");
-}
-
-/* SIGNUP */
-function createAccount(){
-  let users=getUsers();
-  let u=signupUser.value;
-  let p=signupPass.value;
-
-  if(users[u]) return signupError.innerText="Exists";
-
-  users[u]={password:p,posts:[],followers:[],following:[],messages:{},pic:"empty.jpg",verified:false};
-  saveUsers(users);
 }
 
 /* POSTS */
@@ -407,7 +370,7 @@ function loadFeed(){
     div.innerHTML=`
       <div class="user-row">
         <div class="user" onclick="openProfile('${p.user}')">
-          ${p.user} ${verified}
+          @${p.user} ${verified}
         </div>
 
         <button class="follow-btn" onclick="toggleFollow('${p.user}')">
@@ -426,9 +389,14 @@ function loadFeed(){
   });
 }
 
-/* LIKE FIX */
+/* LIKE (1 PER USER FIX) */
 function likePost(id){
   let users=getUsers();
+
+  if(!likedMap[currentUser]) likedMap[currentUser]={};
+  if(likedMap[currentUser][id]) return;
+
+  likedMap[currentUser][id]=true;
 
   Object.values(users).forEach(u=>{
     u.posts.forEach(p=>{
@@ -458,8 +426,8 @@ function toggleFollow(user){
   them.verified = them.followers.length>=100;
 
   saveUsers(users);
-  loadFeed();
   loadProfile();
+  loadFeed();
 }
 
 /* PROFILE */
@@ -469,10 +437,8 @@ function loadProfile(){
 
   profilePic.src=u.pic;
 
-  profileName.innerHTML=`<b>${viewingUser||currentUser}</b> ${u.verified?"◆":""}`;
+  profileName.innerHTML=`<b>@${viewingUser||currentUser}</b> ${u.verified?"◆":""}`;
   profileFollowers.innerText="Followers: "+u.followers.length;
-
-  followArea.innerHTML="";
 }
 
 /* PROFILE PIC */
@@ -494,11 +460,6 @@ function updatePic(e){
 function refreshProfile(){ loadProfile(); }
 function openProfile(u){ viewingUser=u; loadProfile(); }
 function logout(){ currentUser=null; showScreen("welcome"); }
-
-/* LOAD THEME */
-(function(){
-  document.body.className=localStorage.getItem("theme")||"light";
-})();
 
 </script>
 
