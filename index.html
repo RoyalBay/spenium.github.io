@@ -94,11 +94,6 @@ button {
   object-fit:cover;
   border-radius:6px;
 }
-
-.verified {
-  width:14px;
-  vertical-align:middle;
-}
 </style>
 </head>
 
@@ -109,6 +104,8 @@ button {
 <!-- WELCOME -->
 <div id="welcome" class="screen center card" style="display:block;">
   <h2>just WUPHF it.</h2>
+  <p>whenever. wherever.</p>
+
   <button onclick="showScreen('login')">Login</button>
   <button onclick="showScreen('signup')">Create Account</button>
 </div>
@@ -133,6 +130,7 @@ button {
 
 <!-- APP -->
 <div id="app" class="screen">
+
   <div class="container">
 
     <div class="sidebar card">
@@ -166,11 +164,13 @@ button {
       <img id="profilePic" class="profile-pic" src="empty.jpg">
       <input type="file" onchange="updatePic(event)">
 
+      <button onclick="refreshProfile()">Update Profile</button>
+
       <p id="profileName"></p>
       <p id="profileFollowers"></p>
 
-      <button onclick="refreshProfile()">Update Profile</button>
       <div id="followArea"></div>
+      <div id="verifyArea"></div>
     </div>
 
   </div>
@@ -228,14 +228,23 @@ function saveUsers(u){
   localStorage.setItem("users",JSON.stringify(u));
 }
 
-/* LOGIN (FIXED + STABLE) */
+/* LOGIN */
 function login(){
   let users=getUsers();
   let u=loginUser.value.trim();
   let p=loginPass.value;
 
-  if(!users[u]) return loginError.innerText="Incorrect username";
-  if(users[u].password!==p) return loginError.innerText="Incorrect password";
+  loginError.innerText="";
+
+  if(!users[u]){
+    loginError.innerText="Incorrect username";
+    return;
+  }
+
+  if(users[u].password!==p){
+    loginError.innerText="Incorrect password";
+    return;
+  }
 
   currentUser=u;
 
@@ -249,17 +258,23 @@ function createAccount(){
   let u=signupUser.value.trim();
   let p=signupPass.value;
 
-  if(users[u]) return signupError.innerText="Username exists";
-
-  users[u]={password:p,posts:[],followers:[],following:[],messages:{},pic:"empty.jpg",verified:false};
-
-  // first user auto verified
-  if(Object.keys(users).length===1){
-    users[u].verified=true;
+  if(users[u]){
+    signupError.innerText="Username already exists";
+    return;
   }
 
+  users[u]={
+    password:p,
+    posts:[],
+    followers:[],
+    following:[],
+    messages:{},
+    pic:"empty.jpg",
+    verified:false
+  };
+
   saveUsers(users);
-  signupError.innerText="Account created.";
+  signupError.innerText="Account created. Login.";
 }
 
 /* POSTS */
@@ -325,11 +340,14 @@ function loadProfile(){
   if(!u) return;
 
   profilePic.src=u.pic;
+
   profileName.innerHTML=`<b>@${user}</b> ${u.verified?"✔️":""}`;
   profileFollowers.innerText="Followers: "+u.followers.length;
 
   followArea.innerHTML="";
+  verifyArea.innerHTML="";
 
+  // FOLLOW
   if(user!==currentUser){
     let isFollowing=users[currentUser].following.includes(user);
 
@@ -339,12 +357,27 @@ function loadProfile(){
 
     followArea.appendChild(btn);
   }
+
+  // VERIFY BUTTON
+  if(user===currentUser){
+    let vBtn=document.createElement("button");
+    vBtn.innerText = u.verified ? "Unverify Account" : "Verify Account";
+
+    vBtn.onclick=()=>{
+      let users=getUsers();
+      users[currentUser].verified=!users[currentUser].verified;
+      saveUsers(users);
+      loadProfile();
+      loadFeed();
+    };
+
+    verifyArea.appendChild(vBtn);
+  }
 }
 
 /* FOLLOW */
 function toggleFollow(user){
   let users=getUsers();
-
   let me=users[currentUser];
   let them=users[user];
 
