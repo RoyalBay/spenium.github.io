@@ -111,6 +111,11 @@ button {
   width:14px;
   vertical-align:middle;
 }
+
+/* PROFILE NAME FIX */
+.profile-name {
+  font-weight:bold;
+}
 </style>
 </head>
 
@@ -175,7 +180,7 @@ button {
     <div id="profile" class="profile card">
       <h3>Profile</h3>
       <img id="profilePic" class="profile-pic" src="empty.jpg">
-      <p id="profileName"></p>
+      <p id="profileName" class="profile-name"></p>
       <p id="profileFollowers"></p>
     </div>
 
@@ -186,7 +191,7 @@ button {
 let currentUser=null;
 let viewingUser=null;
 
-/* SCREEN CONTROL */
+/* SCREEN */
 function showScreen(id){
   document.querySelectorAll(".screen").forEach(s=>s.style.display="none");
   document.getElementById(id).style.display="block";
@@ -260,20 +265,15 @@ function logout(){
   location.reload();
 }
 
-/* TAB FIX (THIS FIXES MESSAGES BUTTON) */
-function showTab(tab){
-  document.getElementById("feed").style.display = (tab==="feed")?"block":"none";
-  document.getElementById("messages").style.display = (tab==="messages")?"block":"none";
-
-  if(tab==="messages"){
-    loadInbox();
-  }
+/* VERIFIED */
+function isVerified(user){
+  let users=getUsers();
+  return (users[user]?.followers.length||0)>=100;
 }
 
 /* FOLLOW */
 function toggleFollow(user){
   let users=getUsers();
-
   if(user===currentUser) return;
 
   let following = users[currentUser].following;
@@ -331,7 +331,7 @@ function upvote(id){
   loadFeed();
 }
 
-/* DELETE (BACK) */
+/* DELETE */
 function deletePost(id,owner){
   if(owner!==currentUser) return;
 
@@ -343,7 +343,7 @@ function deletePost(id,owner){
   loadFeed();
 }
 
-/* FEED */
+/* FEED (VERIFIED FIXED HERE) */
 function loadFeed(){
   let users=getUsers();
   posts.innerHTML="";
@@ -360,7 +360,10 @@ function loadFeed(){
 
     div.innerHTML=`
       <div>
-        <span class="user" onclick="openProfile('${p.user}')">@${p.user}</span>
+        <span class="user" onclick="openProfile('${p.user}')">
+          @${p.user}
+          ${isVerified(p.user)?'<img class="verified" src="verified.png">':''}
+        </span>
         <button class="follow-btn" onclick="toggleFollow('${p.user}')">
           ${isFollowing ? "Unfollow" : "Follow"}
         </button>
@@ -368,9 +371,7 @@ function loadFeed(){
 
       <div>${p.text}</div>
 
-      <div class="upvote" onclick="upvote(${p.id})">
-        ▲ ${p.likes.length}
-      </div>
+      <div class="upvote" onclick="upvote(${p.id})">▲ ${p.likes.length}</div>
 
       <div style="font-size:11px;color:#777;">${p.time}</div>
 
@@ -383,7 +384,7 @@ function loadFeed(){
   });
 }
 
-/* PROFILE */
+/* PROFILE (VERIFIED FIXED HERE) */
 function openProfile(user){
   viewingUser=user;
   loadProfile();
@@ -393,12 +394,16 @@ function loadProfile(){
   let users=getUsers();
   let u=users[viewingUser||currentUser];
 
-  profileName.innerText="@"+(viewingUser||currentUser);
+  profileName.innerHTML =
+    "@"+(viewingUser||currentUser)+
+    (isVerified(viewingUser||currentUser)?
+      ' <img class="verified" src="verified.png">':"");
+
   profilePic.src=u.pic;
   profileFollowers.innerText="Followers: "+u.followers.length;
 }
 
-/* MESSAGES */
+/* MESSAGES (REAL FIX: DUPLICATE OBJECTS) */
 function sendMessage(){
   let users=getUsers();
   let to=msgUser.value.trim();
@@ -409,10 +414,15 @@ function sendMessage(){
   users[currentUser].messages[to] ||= [];
   users[to].messages[currentUser] ||= [];
 
-  let msg={from:currentUser,text};
+  users[currentUser].messages[to].push({
+    from:currentUser,
+    text:text
+  });
 
-  users[currentUser].messages[to].push(msg);
-  users[to].messages[currentUser].push(msg);
+  users[to].messages[currentUser].push({
+    from:currentUser,
+    text:text
+  });
 
   saveUsers(users);
 
