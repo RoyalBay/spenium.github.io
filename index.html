@@ -18,10 +18,14 @@ body {
   padding:12px 18px;
   font-size:22px;
   font-weight:bold;
+  cursor:pointer;
+  position:relative;
 }
 
 #logoutBtn {
-  float:right;
+  position:absolute;
+  right:10px;
+  top:8px;
   width:auto;
   padding:5px 10px;
   background:#2d4373;
@@ -76,13 +80,6 @@ button {
   margin-top:5px;
 }
 
-.follow-btn {
-  width:auto;
-  font-size:11px;
-  padding:2px 6px;
-  margin:5px 0;
-}
-
 .user {
   color:#3b5998;
   font-weight:bold;
@@ -104,6 +101,15 @@ button {
   cursor:pointer;
 }
 
+.follow-post {
+  position:absolute;
+  right:5px;
+  top:5px;
+  width:auto;
+  font-size:11px;
+  padding:3px 6px;
+}
+
 .profile-pic {
   width:90px;
   height:90px;
@@ -120,7 +126,7 @@ button {
 
 <body>
 
-<div class="topbar">
+<div class="topbar" onclick="goHome()">
   WUPHF
   <button id="logoutBtn" onclick="logout()">Logout</button>
 </div>
@@ -129,7 +135,6 @@ button {
 <div id="welcome" class="screen center card" style="display:block;">
   <h2>just WUPHF it.</h2>
   <p>whenever. wherever.</p>
-
   <button onclick="showScreen('login')">Login</button>
   <button onclick="showScreen('signup')">Create Account</button>
 </div>
@@ -172,7 +177,7 @@ button {
     <!-- MESSAGES -->
     <div id="messages" class="feed card" style="display:none;">
       <h3>Messages</h3>
-      <input id="msgUser" placeholder="Username">
+      <input id="msgUser">
       <textarea id="msgText"></textarea>
       <button onclick="sendMessage()">Send</button>
       <div id="messageList"></div>
@@ -183,15 +188,13 @@ button {
     <div id="profile" class="profile card">
       <h3>Profile</h3>
 
-      <img id="profilePic" class="profile-pic" src="empty.jpg">
       <input type="file" onchange="updatePic(event)">
-
       <button onclick="refreshProfile()">Update Profile</button>
+
+      <div id="followArea"></div>
 
       <p id="profileName"></p>
       <p id="profileFollowers"></p>
-
-      <div id="followArea"></div>
     </div>
 
   </div>
@@ -219,6 +222,7 @@ function showTab(tab){
   loadProfile();
 }
 
+/* HOME FIX */
 function goHome(){
   if(currentUser){
     viewingUser=null;
@@ -249,14 +253,7 @@ function saveUsers(u){
   localStorage.setItem("users",JSON.stringify(u));
 }
 
-/* VERIFY CHECK */
-function checkVerification(user){
-  let users=getUsers();
-  users[user].verified = users[user].followers.length >= 100;
-  saveUsers(users);
-}
-
-/* LOGIN */
+/* LOGIN FIXED */
 function login(){
   let users=getUsers();
   let u=loginUser.value.trim();
@@ -264,8 +261,15 @@ function login(){
 
   loginError.innerText="";
 
-  if(!users[u]) return loginError.innerText="Incorrect username";
-  if(users[u].password!==p) return loginError.innerText="Incorrect password";
+  if(!users[u]){
+    loginError.innerText="Incorrect username";
+    return;
+  }
+
+  if(users[u].password !== p){
+    loginError.innerText="Incorrect password";
+    return;
+  }
 
   currentUser=u;
   showScreen("app");
@@ -278,7 +282,7 @@ function createAccount(){
   let u=signupUser.value.trim();
   let p=signupPass.value;
 
-  if(users[u]) return signupError.innerText="Username already exists";
+  if(users[u]) return signupError.innerText="Username exists";
 
   users[u]={password:p,posts:[],followers:[],following:[],messages:{},pic:"empty.jpg",verified:false};
 
@@ -314,32 +318,36 @@ function loadFeed(){
   all.sort((a,b)=>b.id-a.id);
 
   all.forEach(p=>{
-    let verified = users[p.user].verified 
-      ? `<img src="verify.png" class="verified">` : "";
+    let verified = users[p.user].verified
+      ? `<img src="verify.png" class="verified">`
+      : "";
 
     let isFollowing = users[currentUser].following.includes(p.user);
 
-    let followBtn = "";
+    let followBtn="";
     if(p.user !== currentUser){
-      followBtn = `<button class="follow-btn" onclick="toggleFollow('${p.user}')">
-        ${isFollowing ? "Unfollow" : "Follow"}
-      </button>`;
+      followBtn=`
+        <button class="follow-post" onclick="toggleFollow('${p.user}')">
+          ${isFollowing ? "Unfollow" : "Follow"}
+        </button>
+      `;
     }
 
     let div=document.createElement("div");
     div.className="post";
 
     div.innerHTML=`
+      ${followBtn}
+
       <div class="user" onclick="openProfile('${p.user}')">
         @${p.user} ${verified}
       </div>
 
-      ${followBtn}
-
       <div>${p.text}</div>
       <div style="font-size:11px;color:#777;">${p.time}</div>
 
-      ${p.user===currentUser?`<div class="delete" onclick="deletePost(${p.id})">delete</div>`:""}
+      ${p.user===currentUser?
+        `<div class="delete" onclick="deletePost(${p.id})">delete</div>`:""}
     `;
 
     posts.appendChild(div);
@@ -362,12 +370,7 @@ function loadProfile(){
 
   if(!u) return;
 
-  profilePic.src=u.pic;
-
-  profileName.innerHTML=`<b>@${user}</b> ${
-    u.verified ? '<img src="verify.png" class="verified">' : ''
-  }`;
-
+  profileName.innerHTML=`<b>@${user}</b> ${u.verified ? '<img src="verify.png" class="verified">' : ''}`;
   profileFollowers.innerText="Followers: "+u.followers.length;
 
   followArea.innerHTML="";
@@ -386,6 +389,7 @@ function loadProfile(){
 /* FOLLOW */
 function toggleFollow(user){
   let users=getUsers();
+
   let me=users[currentUser];
   let them=users[user];
 
@@ -397,14 +401,14 @@ function toggleFollow(user){
     them.followers.push(currentUser);
   }
 
-  checkVerification(user);
+  users[user].verified = users[user].followers.length >= 100;
 
   saveUsers(users);
   loadProfile();
   loadFeed();
 }
 
-/* PROFILE PIC */
+/* OTHER FUNCTIONS (UNCHANGED CORE) */
 function updatePic(e){
   let file=e.target.files[0];
   if(!file) return;
@@ -419,59 +423,11 @@ function updatePic(e){
   r.readAsDataURL(file);
 }
 
-function refreshProfile(){
-  loadProfile();
-}
+function refreshProfile(){ loadProfile(); }
 
 function openProfile(u){
   viewingUser=u;
   loadProfile();
-}
-
-/* MESSAGES */
-function sendMessage(){
-  let users=getUsers();
-  let to=msgUser.value.trim();
-  let text=msgText.value.trim();
-
-  if(!users[to]||!text) return;
-
-  users[currentUser].messages[to] ||= [];
-  users[to].messages[currentUser] ||= [];
-
-  let msg={from:currentUser,text};
-
-  users[currentUser].messages[to].push(msg);
-  users[to].messages[currentUser].push(msg);
-
-  saveUsers(users);
-
-  msgText.value="";
-  loadInbox();
-  loadChat(to);
-}
-
-function loadInbox(){
-  let users=getUsers();
-  messageList.innerHTML="";
-
-  Object.keys(users[currentUser].messages).forEach(u=>{
-    let div=document.createElement("div");
-    div.innerText="@"+u;
-    div.onclick=()=>loadChat(u);
-    messageList.appendChild(div);
-  });
-}
-
-function loadChat(u){
-  let users=getUsers();
-  chatBox.innerHTML="";
-
-  (users[currentUser].messages[u]||[]).forEach(m=>{
-    let div=document.createElement("div");
-    div.innerText=m.from+": "+m.text;
-    chatBox.appendChild(div);
-  });
 }
 
 function logout(){
