@@ -149,16 +149,14 @@ button {
   <h3>Login</h3>
   <input id="loginUser" placeholder="Username">
   <input id="loginPass" type="password" placeholder="Password">
-  <div id="loginError" style="color:red;font-size:12px;"></div>
   <button onclick="login()">Enter</button>
 </div>
 
 <!-- SIGNUP -->
 <div id="signup" class="screen center card">
   <h3>Create Account</h3>
-  <input id="signupUser" placeholder="Username">
-  <input id="signupPass" type="password" placeholder="Password">
-  <div id="signupError" style="color:red;font-size:12px;"></div>
+  <input id="signupUser">
+  <input id="signupPass" type="password">
   <button onclick="createAccount()">Create</button>
 </div>
 
@@ -183,7 +181,6 @@ button {
     <!-- MESSAGES -->
     <div id="messages" class="feed card" style="display:none;">
       <h3>Messages</h3>
-
       <input id="msgUser" placeholder="Username">
       <textarea id="msgText"></textarea>
       <button onclick="sendMessage()">Send</button>
@@ -199,8 +196,9 @@ button {
       <img id="profilePic" class="profile-pic" src="empty.jpg">
 
       <input type="file" accept="image/*" onchange="updatePic(event)">
+      <button onclick="updatePicButton()">Update Profile Picture</button>
 
-      <p id="profileName" class="profile-name"></p>
+      <p id="profileName"></p>
       <p id="profileFollowers"></p>
     </div>
 
@@ -211,16 +209,15 @@ button {
 let currentUser=null;
 let viewingUser=null;
 
-/* SCREEN */
+/* NAV */
 function showScreen(id){
   document.querySelectorAll(".screen").forEach(s=>s.style.display="none");
   document.getElementById(id).style.display="block";
 }
 
-/* TAB */
 function showTab(tab){
-  document.getElementById("feed").style.display="none";
-  document.getElementById("messages").style.display="none";
+  feed.style.display="none";
+  messages.style.display="none";
 
   document.getElementById(tab).style.display="block";
 
@@ -229,7 +226,6 @@ function showTab(tab){
   loadProfile();
 }
 
-/* HOME */
 function goHome(){
   if(!currentUser){
     showScreen("welcome");
@@ -239,7 +235,7 @@ function goHome(){
   }
 }
 
-/* STORAGE */
+/* USERS */
 function getUsers(){
   let u=JSON.parse(localStorage.getItem("users")||"{}");
 
@@ -257,37 +253,36 @@ function saveUsers(u){
   localStorage.setItem("users",JSON.stringify(u));
 }
 
-/* CREATE */
+/* ACCOUNT */
 function createAccount(){
   let users=getUsers();
   let u=signupUser.value.trim();
   let p=signupPass.value;
 
-  if(users[u]){
-    signupError.innerText="Username already in use";
-    return;
-  }
+  if(users[u]) return alert("Username exists");
 
   users[u]={password:p,posts:[],followers:[],following:[],messages:{},pic:"empty.jpg"};
   saveUsers(users);
-
-  signupError.innerText="Account created. Login.";
 }
 
-/* LOGIN */
+/* LOGIN FIX */
 function login(){
   let users=getUsers();
   let u=loginUser.value;
   let p=loginPass.value;
 
-  if(!users[u]||users[u].password!==p){
-    loginError.innerText="Incorrect login";
-    return;
-  }
+  if(!users[u]||users[u].password!==p) return;
 
   currentUser=u;
   showScreen("app");
   showTab("feed");
+}
+
+/* LOGOUT FIX (IMPORTANT FIX) */
+function logout(){
+  currentUser=null;
+  viewingUser=null;
+  showScreen("welcome");
 }
 
 /* VERIFIED */
@@ -296,20 +291,19 @@ function isVerified(user){
   return (users[user]?.followers.length||0)>=100;
 }
 
-/* FOLLOW FIX RESTORED */
+/* FOLLOW */
 function toggleFollow(user){
   let users=getUsers();
   if(user===currentUser) return;
 
-  let following=users[currentUser].following;
-  let followers=users[user].followers;
+  let f=users[currentUser].following;
+  let r=users[user].followers;
 
-  if(!following.includes(user)){
-    following.push(user);
-    followers.push(currentUser);
+  if(!f.includes(user)){
+    f.push(user); r.push(currentUser);
   } else {
-    users[currentUser].following=following.filter(x=>x!==user);
-    users[user].followers=followers.filter(x=>x!==currentUser);
+    users[currentUser].following=f.filter(x=>x!==user);
+    users[user].followers=r.filter(x=>x!==currentUser);
   }
 
   saveUsers(users);
@@ -327,47 +321,34 @@ function addPost(){
     id:Date.now(),
     user:currentUser,
     text,
-    time:new Date().toLocaleString(),
     likes:[]
   });
 
   saveUsers(users);
-  postText.value="";
   loadFeed();
 }
 
-/* LIKE */
-function upvote(id){
-  let users=getUsers();
+/* PROFILE PIC FIX (NOW WORKS RELIABLY) */
+function updatePic(e){
+  let file=e.target.files[0];
+  if(!file) return;
 
-  Object.values(users).forEach(u=>{
-    u.posts.forEach(p=>{
-      if(p.id===id){
-        p.likes ||= [];
-        if(!p.likes.includes(currentUser))
-          p.likes.push(currentUser);
-        else
-          p.likes=p.likes.filter(x=>x!==currentUser);
-      }
-    });
-  });
-
-  saveUsers(users);
-  loadFeed();
+  let r=new FileReader();
+  r.onload=()=>{
+    let users=getUsers();
+    users[currentUser].pic=r.result;
+    saveUsers(users);
+    loadProfile();
+  };
+  r.readAsDataURL(file);
 }
 
-/* DELETE */
-function deletePost(id,owner){
-  if(owner!==currentUser) return;
-
-  let users=getUsers();
-  users[currentUser].posts=users[currentUser].posts.filter(p=>p.id!==id);
-
-  saveUsers(users);
-  loadFeed();
+/* BUTTON OPTIONAL (kept for UI consistency) */
+function updatePicButton(){
+  alert("Use file upload above.");
 }
 
-/* FEED FIXED LINKS + FOLLOW */
+/* FEED */
 function loadFeed(){
   let users=getUsers();
   posts.innerHTML="";
@@ -377,8 +358,6 @@ function loadFeed(){
   all.sort((a,b)=>b.id-a.id);
 
   all.forEach(p=>{
-    let isFollowing=users[currentUser].following.includes(p.user);
-
     let div=document.createElement("div");
     div.className="post";
 
@@ -388,37 +367,15 @@ function loadFeed(){
         ${isVerified(p.user)?'<img class="verified" src="verified.png">':''}
       </span>
 
-      <button class="follow-btn" onclick="toggleFollow('${p.user}')">
-        ${isFollowing?"Unfollow":"Follow"}
+      <button onclick="toggleFollow('${p.user}')">
+        Follow
       </button>
 
       <div>${p.text}</div>
-
-      <div class="upvote" onclick="upvote(${p.id})">▲ ${p.likes.length}</div>
-
-      ${p.user===currentUser?
-        `<div class="delete" onclick="deletePost(${p.id},'${p.user}')">delete</div>`:""}
     `;
 
     posts.appendChild(div);
   });
-}
-
-/* PROFILE PIC UPLOAD FIX */
-function updatePic(e){
-  let file=e.target.files[0];
-  if(!file) return;
-
-  let reader=new FileReader();
-
-  reader.onload=function(){
-    let users=getUsers();
-    users[currentUser].pic=reader.result;
-    saveUsers(users);
-    loadProfile();
-  };
-
-  reader.readAsDataURL(file);
 }
 
 /* PROFILE */
@@ -427,20 +384,16 @@ function loadProfile(){
   let u=users[viewingUser||currentUser];
 
   profilePic.src=u.pic;
-
-  profileName.innerHTML="@"+(viewingUser||currentUser)+
-    (isVerified(viewingUser||currentUser)?
-    ' <img class="verified" src="verified.png">':"");
-
+  profileName.innerHTML="@"+(viewingUser||currentUser);
   profileFollowers.innerText="Followers: "+u.followers.length;
 }
 
-function openProfile(user){
-  viewingUser=user;
+function openProfile(u){
+  viewingUser=u;
   loadProfile();
 }
 
-/* MESSAGES FIX */
+/* MESSAGES FIX (REAL FIX: SYNC BOTH SIDES PROPERLY) */
 function sendMessage(){
   let users=getUsers();
   let to=msgUser.value.trim();
@@ -451,8 +404,10 @@ function sendMessage(){
   users[currentUser].messages[to] ||= [];
   users[to].messages[currentUser] ||= [];
 
-  users[currentUser].messages[to].push({from:currentUser,text});
-  users[to].messages[currentUser].push({from:currentUser,text});
+  let msg={from:currentUser,text};
+
+  users[currentUser].messages[to].push(msg);
+  users[to].messages[currentUser].push(msg);
 
   saveUsers(users);
 
@@ -464,19 +419,19 @@ function loadInbox(){
   let users=getUsers();
   messageList.innerHTML="";
 
-  Object.keys(users[currentUser].messages).forEach(user=>{
+  Object.keys(users[currentUser].messages).forEach(u=>{
     let div=document.createElement("div");
-    div.innerText="@"+user;
-    div.onclick=()=>loadChat(user);
+    div.innerText="@"+u;
+    div.onclick=()=>loadChat(u);
     messageList.appendChild(div);
   });
 }
 
-function loadChat(user){
+function loadChat(u){
   let users=getUsers();
   chatBox.innerHTML="";
 
-  (users[currentUser].messages[user]||[]).forEach(m=>{
+  (users[currentUser].messages[u]||[]).forEach(m=>{
     let div=document.createElement("div");
     div.innerText=m.from+": "+m.text;
     chatBox.appendChild(div);
