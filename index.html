@@ -79,6 +79,7 @@ button {
   position:relative;
 }
 
+/* FIXED FOLLOW BUTTON SIZE */
 .follow-btn {
   font-size:10px;
   padding:2px 5px;
@@ -116,6 +117,7 @@ button {
   font-weight:bold;
 }
 
+/* messages styling */
 #messageList div {
   padding:6px;
   border-bottom:1px solid #eee;
@@ -135,12 +137,11 @@ button {
 
 <div class="topbar" onclick="goHome()">WUPHF</div>
 
-<!-- WELCOME -->
+<!-- WELCOME (WORKING FIXED) -->
 <div id="welcome" class="screen center card" style="display:block;">
   <h2>just WUPHF it.</h2>
   <p style="font-size:12px;color:#555;">whenever. whenever.</p>
 
-  <!-- FIX: explicit functions still used but now safe -->
   <button onclick="showScreen('login')">Login</button>
   <button onclick="showScreen('signup')">Create Account</button>
 </div>
@@ -173,6 +174,7 @@ button {
       <button onclick="logout()">Logout</button>
     </div>
 
+    <!-- FEED -->
     <div id="feed" class="feed card">
       <h3>Feed</h3>
       <textarea id="postText"></textarea>
@@ -180,6 +182,7 @@ button {
       <div id="posts"></div>
     </div>
 
+    <!-- MESSAGES -->
     <div id="messages" class="feed card" style="display:none;">
       <h3>Messages</h3>
       <input id="msgUser" placeholder="Username">
@@ -190,13 +193,13 @@ button {
       <div id="chatBox"></div>
     </div>
 
+    <!-- PROFILE -->
     <div id="profile" class="profile card">
       <h3>Profile</h3>
 
       <img id="profilePic" class="profile-pic" src="empty.jpg">
 
       <input type="file" accept="image/*" onchange="updatePic(event)">
-      <button onclick="updatePicButton()">Update Profile Picture</button>
 
       <p id="profileName"></p>
       <p id="profileFollowers"></p>
@@ -209,19 +212,12 @@ button {
 let currentUser=null;
 let viewingUser=null;
 
-/* 🔥 FIX: DOM SAFE ACCESS (prevents broken buttons) */
-const loginUser = document.getElementById("loginUser");
-const loginPass = document.getElementById("loginPass");
-const signupUser = document.getElementById("signupUser");
-const signupPass = document.getElementById("signupPass");
-
-/* SCREEN */
+/* NAV */
 function showScreen(id){
   document.querySelectorAll(".screen").forEach(s=>s.style.display="none");
   document.getElementById(id).style.display="block";
 }
 
-/* TAB */
 function showTab(tab){
   feed.style.display="none";
   messages.style.display="none";
@@ -260,7 +256,7 @@ function saveUsers(u){
   localStorage.setItem("users",JSON.stringify(u));
 }
 
-/* CREATE (FIXED STABLE) */
+/* SIGNUP FIXED */
 function createAccount(){
   let users=getUsers();
   let u=signupUser.value.trim();
@@ -277,7 +273,7 @@ function createAccount(){
   signupError.innerText="Account created. Login.";
 }
 
-/* LOGIN (FIXED SAFE) */
+/* LOGIN FIXED */
 function login(){
   let users=getUsers();
   let u=loginUser.value;
@@ -298,11 +294,164 @@ function login(){
   showTab("feed");
 }
 
-/* LOGOUT FIX */
+/* LOGOUT FIXED */
 function logout(){
   currentUser=null;
   viewingUser=null;
   showScreen("welcome");
+}
+
+/* VERIFIED (RESTORED) */
+function isVerified(user){
+  let users=getUsers();
+  return (users[user]?.followers.length||0)>=100;
+}
+
+/* FOLLOW (RESTORED) */
+function toggleFollow(user){
+  let users=getUsers();
+  if(user===currentUser) return;
+
+  let f=users[currentUser].following;
+  let r=users[user].followers;
+
+  if(!f.includes(user)){
+    f.push(user);
+    r.push(currentUser);
+  } else {
+    users[currentUser].following=f.filter(x=>x!==user);
+    users[user].followers=r.filter(x=>x!==currentUser);
+  }
+
+  saveUsers(users);
+  loadFeed();
+  loadProfile();
+}
+
+/* POSTS */
+function addPost(){
+  let users=getUsers();
+  let text=postText.value.trim();
+  if(!text) return;
+
+  users[currentUser].posts.unshift({
+    id:Date.now(),
+    user:currentUser,
+    text,
+    likes:[]
+  });
+
+  saveUsers(users);
+  loadFeed();
+}
+
+/* FEED (RESTORED FULL FEATURES) */
+function loadFeed(){
+  let users=getUsers();
+  posts.innerHTML="";
+
+  let all=[];
+  Object.values(users).forEach(u=>all.push(...u.posts));
+  all.sort((a,b)=>b.id-a.id);
+
+  all.forEach(p=>{
+    let isFollowing=users[currentUser].following.includes(p.user);
+
+    let div=document.createElement("div");
+    div.className="post";
+
+    div.innerHTML=`
+      <span class="user" onclick="openProfile('${p.user}')">
+        @${p.user}
+        ${isVerified(p.user)?'<img class="verified" src="verified.png">':''}
+      </span>
+
+      <button class="follow-btn" onclick="toggleFollow('${p.user}')">
+        ${isFollowing?"Unfollow":"Follow"}
+      </button>
+
+      <div>${p.text}</div>
+    `;
+
+    posts.appendChild(div);
+  });
+}
+
+/* PROFILE */
+function loadProfile(){
+  let users=getUsers();
+  let u=users[viewingUser||currentUser];
+
+  profilePic.src=u.pic;
+  profileName.innerHTML="<b>@"+(viewingUser||currentUser)+"</b>" +
+    (isVerified(viewingUser||currentUser)?' <img class="verified" src="verified.png">':"");
+
+  profileFollowers.innerText="Followers: "+u.followers.length;
+}
+
+function openProfile(u){
+  viewingUser=u;
+  loadProfile();
+}
+
+/* PROFILE PIC */
+function updatePic(e){
+  let file=e.target.files[0];
+  if(!file) return;
+
+  let r=new FileReader();
+  r.onload=()=>{
+    let users=getUsers();
+    users[currentUser].pic=r.result;
+    saveUsers(users);
+    loadProfile();
+  };
+  r.readAsDataURL(file);
+}
+
+/* MESSAGES (UNCHANGED WORKING CORE) */
+function sendMessage(){
+  let users=getUsers();
+  let to=msgUser.value.trim();
+  let text=msgText.value.trim();
+
+  if(!users[to]||!text) return;
+
+  users[currentUser].messages[to] ||= [];
+  users[to].messages[currentUser] ||= [];
+
+  let msg={from:currentUser,text};
+
+  users[currentUser].messages[to].push(msg);
+  users[to].messages[currentUser].push(msg);
+
+  saveUsers(users);
+
+  loadInbox();
+  loadChat(to);
+}
+
+function loadInbox(){
+  let users=getUsers();
+  messageList.innerHTML="";
+
+  Object.keys(users[currentUser].messages).forEach(u=>{
+    let div=document.createElement("div");
+    div.innerText="@"+u;
+    div.onclick=()=>loadChat(u);
+    messageList.appendChild(div);
+  });
+}
+
+function loadChat(u){
+  let users=getUsers();
+  chatBox.innerHTML="";
+
+  (users[currentUser].messages[u]||[]).forEach(m=>{
+    let div=document.createElement("div");
+    div.innerText=m.from+": "+m.text;
+    chatBox.appendChild(div);
+  });
 }
 </script>
 
