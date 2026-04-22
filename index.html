@@ -1,131 +1,97 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WUPHF</title>
 
 <style>
 body {
-  margin: 0;
-  font-family: Tahoma, Arial, sans-serif;
-  background: linear-gradient(#dfe7f3, #f5f6f7);
+  margin:0;
+  font-family:Tahoma;
+  background:linear-gradient(#dfe7f3,#f5f6f7);
 }
 
-/* TOPBAR */
 .topbar {
-  background: #3b5998;
-  color: white;
-  padding: 12px 18px;
-  font-weight: bold;
-  font-size: 22px;
-  cursor: pointer;
+  background:#3b5998;
+  color:white;
+  padding:12px 18px;
+  font-weight:bold;
+  font-size:22px;
+  cursor:pointer;
 }
 
-/* LAYOUT FIX (LEFT SHIFT + RIGHT PROFILE) */
 .container {
-  max-width: 1100px;
-  margin: 20px auto;
-  display: none;
-  gap: 10px;
+  max-width:1100px;
+  margin:20px auto;
+  display:none;
 }
 
-/* LEFT SIDEBAR */
-.sidebar {
-  width: 150px;
-  float: left;
-}
+.sidebar { width:160px; float:left; }
+.feed { width:600px; float:left; margin-left:10px; }
+.profile { width:260px; float:right; }
 
-/* MAIN FEED (SHIFT LEFT SLIGHTLY) */
-#feed {
-  margin-left: 10px;
-  width: 600px;
-  display: inline-block;
-  vertical-align: top;
-}
-
-/* RIGHT PROFILE */
-#profile {
-  width: 240px;
-  float: right;
-}
-
-/* CARDS */
 .card {
-  background: white;
-  padding: 15px;
-  border-radius: 4px;
-  margin-bottom: 10px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+  background:white;
+  padding:15px;
+  border-radius:4px;
+  margin-bottom:10px;
 }
 
-/* INPUTS */
-input, button, textarea {
-  width: 100%;
-  padding: 10px;
-  margin: 5px 0;
-  border: 1px solid #ccd0d5;
-  border-radius: 3px;
-  box-sizing: border-box;
+input, textarea, button {
+  width:100%;
+  padding:10px;
+  margin:5px 0;
+  border:1px solid #ccc;
+  border-radius:3px;
 }
 
 button {
-  background: #3b5998;
-  color: white;
-  border: none;
-  cursor: pointer;
-  font-weight: bold;
-}
-
-textarea { height: 80px; resize: none; }
-
-/* POSTS */
-.post {
-  border-top: 1px solid #eee;
-  padding: 10px 0;
+  background:#3b5998;
+  color:white;
+  border:none;
+  cursor:pointer;
 }
 
 .user {
-  font-weight: bold;
-  color: #3b5998;
-  cursor: pointer;
+  color:#3b5998;
+  font-weight:bold;
+  cursor:pointer;
 }
 
-/* FOLLOW BUTTON */
-.follow-btn {
-  font-size: 11px;
-  padding: 3px 6px;
-  width: auto;
+.post {
+  border-top:1px solid #eee;
+  padding:10px 0;
+  position:relative;
 }
 
-/* VERIFIED ICON */
-.verified {
-  width: 14px;
-  vertical-align: middle;
-}
+.upvote { cursor:pointer; font-size:12px; }
 
-/* UPVOTE */
-.upvote {
-  cursor: pointer;
-  font-size: 12px;
-}
-
-/* DELETE */
 .delete {
-  font-size: 11px;
-  color: red;
-  cursor: pointer;
-  float: right;
+  position:absolute;
+  bottom:5px;
+  right:5px;
+  font-size:11px;
+  color:red;
+  cursor:pointer;
 }
 
-/* PROFILE PIC */
+.follow-btn {
+  font-size:11px;
+  padding:3px 6px;
+  width:auto;
+}
+
+.verified {
+  width:14px;
+  vertical-align:middle;
+}
+
 .profile-pic {
-  width: 90px;
-  height: 90px;
-  border-radius: 6px;
-  object-fit: cover;
-  border: 2px solid #999;
+  width:90px;
+  height:90px;
+  border-radius:6px;
+  object-fit:cover;
 }
 </style>
 </head>
@@ -137,8 +103,8 @@ textarea { height: 80px; resize: none; }
 <!-- LOGIN -->
 <div id="loginBox" class="card" style="max-width:400px;margin:80px auto;">
   <h3>Login</h3>
-  <input id="username" placeholder="Username" />
-  <input id="password" type="password" placeholder="Password" />
+  <input id="username" placeholder="Username">
+  <input id="password" type="password" placeholder="Password">
   <div id="loginError" style="color:red;font-size:12px;"></div>
   <button onclick="login()">Enter</button>
 </div>
@@ -146,7 +112,6 @@ textarea { height: 80px; resize: none; }
 <!-- APP -->
 <div class="container" id="app">
 
-  <!-- SIDEBAR -->
   <div class="sidebar card">
     <button onclick="showTab('feed')">Feed</button>
     <button onclick="showTab('messages')">Messages</button>
@@ -154,20 +119,31 @@ textarea { height: 80px; resize: none; }
   </div>
 
   <!-- FEED -->
-  <div id="feed" class="card">
+  <div id="feed" class="feed card">
     <h3>Feed</h3>
     <textarea id="postText"></textarea>
     <button onclick="addPost()">Post</button>
     <div id="posts"></div>
   </div>
 
-  <!-- PROFILE (RIGHT SIDE) -->
-  <div id="profile" class="card">
+  <!-- MESSAGES -->
+  <div id="messages" class="feed card" style="display:none;">
+    <h3>Inbox</h3>
+
+    <input id="msgUser" placeholder="Username">
+    <textarea id="msgText"></textarea>
+    <button onclick="sendMessage()">Send</button>
+
+    <div id="messageList"></div>
+  </div>
+
+  <!-- PROFILE -->
+  <div id="profile" class="profile card">
     <h3>Profile</h3>
 
-    <img id="profilePic" class="profile-pic" />
+    <img id="profilePic" class="profile-pic">
 
-    <input type="file" id="profileUpload" />
+    <input type="file" id="profileUpload">
     <button onclick="updateProfile()">Update</button>
 
     <p id="profileName"></p>
@@ -180,6 +156,7 @@ textarea { height: 80px; resize: none; }
 let currentUser = null;
 let viewingUser = null;
 
+/* STORAGE SAFE LOAD */
 function getUsers() {
   return JSON.parse(localStorage.getItem("users") || "{}");
 }
@@ -198,11 +175,12 @@ function login() {
 
   if (!users[u]) {
     users[u] = {
-      password: p,
-      pic: "",
-      posts: [],
-      followers: [],
-      following: []
+      password:p,
+      pic:"empty.jpg",
+      posts:[],
+      followers:[],
+      following:[],
+      messages:{}
     };
   }
 
@@ -212,96 +190,87 @@ function login() {
   }
 
   currentUser = u;
-  saveUsers(users);
 
-  loginBox.style.display = "none";
-  app.style.display = "flex";
+  loginBox.style.display="none";
+  app.style.display="block";
 
   showTab("feed");
   loadFeed();
   loadProfile();
 }
 
-/* NAV */
+/* NAV FIX */
 function showTab(tab) {
-  feed.style.display = tab === "feed" ? "block" : "none";
-  messages.style.display = tab === "messages" ? "block" : "none";
-  profile.style.display = "block";
+  feed.style.display = tab==="feed"?"block":"none";
+  messages.style.display = tab==="messages"?"block":"none";
 }
 
+/* HOME */
 function goHome() {
-  viewingUser = null;
+  viewingUser=null;
   loadProfile();
   showTab("feed");
 }
 
-function logout() {
-  location.reload();
-}
-
-/* VERIFIED (100 FOLLOWERS) */
-function isVerified(user) {
-  let users = getUsers();
-  return (users[user]?.followers?.length || 0) >= 100;
+/* VERIFIED */
+function isVerified(user){
+  let users=getUsers();
+  return (users[user]?.followers?.length||0)>=100;
 }
 
 /* FOLLOW */
-function toggleFollow(user) {
-  let users = getUsers();
+function toggleFollow(user){
+  let users=getUsers();
 
   users[currentUser].following ||= [];
   users[user].followers ||= [];
 
-  if (!users[currentUser].following.includes(user)) {
+  if(!users[currentUser].following.includes(user)){
     users[currentUser].following.push(user);
     users[user].followers.push(currentUser);
   } else {
     users[currentUser].following =
-      users[currentUser].following.filter(x => x !== user);
-
+      users[currentUser].following.filter(x=>x!==user);
     users[user].followers =
-      users[user].followers.filter(x => x !== currentUser);
+      users[user].followers.filter(x=>x!==currentUser);
   }
 
   saveUsers(users);
   loadFeed();
-}
-
-/* OPEN PROFILE */
-function openProfile(user) {
-  viewingUser = user;
   loadProfile();
 }
 
 /* POSTS */
-function addPost() {
-  let users = getUsers();
-  let text = postText.value.trim();
-  if (!text) return;
+function addPost(){
+  let users=getUsers();
+  let text=postText.value.trim();
+  if(!text) return;
 
   users[currentUser].posts.unshift({
-    id: Date.now(),
-    user: currentUser,
+    id:Date.now(),
+    user:currentUser,
     text,
-    time: new Date().toLocaleString(),
-    likes: []
+    time:new Date().toLocaleString(),
+    likes:[]
   });
 
   saveUsers(users);
-  postText.value = "";
+  postText.value="";
   loadFeed();
 }
 
-/* UPVOTE */
-function upvote(id) {
-  let users = getUsers();
+/* LIKE */
+function upvote(id){
+  let users=getUsers();
 
-  Object.values(users).forEach(u => {
-    (u.posts || []).forEach(p => {
-      if (p.id === id) {
+  Object.values(users).forEach(u=>{
+    (u.posts||[]).forEach(p=>{
+      if(p.id===id){
         p.likes ||= [];
-        if (!p.likes.includes(currentUser)) p.likes.push(currentUser);
-        else p.likes = p.likes.filter(x => x !== currentUser);
+        if(!p.likes.includes(currentUser))
+          p.likes.push(currentUser);
+        else
+          p.likes=p.likes.filter(x=>x!==currentUser);
       }
     });
   });
@@ -310,30 +279,42 @@ function upvote(id) {
   loadFeed();
 }
 
-/* FEED (FIXED LINKS + VERIFIED + FOLLOW BUTTON) */
-function loadFeed() {
-  let users = getUsers();
-  let box = document.getElementById("posts");
-  box.innerHTML = "";
+/* DELETE */
+function deletePost(id,owner){
+  if(owner!==currentUser) return;
 
-  let posts = [];
-  Object.values(users).forEach(u => {
-    if (u.posts) posts.push(...u.posts);
+  let users=getUsers();
+
+  Object.values(users).forEach(u=>{
+    u.posts=(u.posts||[]).filter(p=>p.id!==id);
   });
 
-  posts.sort((a,b)=>b.id-a.id);
+  saveUsers(users);
+  loadFeed();
+}
 
-  posts.forEach(p => {
-    let verified = isVerified(p.user);
+/* FEED */
+function loadFeed(){
+  let users=getUsers();
+  let box=posts;
+  box.innerHTML="";
 
-    let div = document.createElement("div");
-    div.className = "post";
+  let all=[];
+  Object.values(users).forEach(u=>{
+    if(u.posts) all.push(...u.posts);
+  });
 
-    div.innerHTML = `
+  all.sort((a,b)=>b.id-a.id);
+
+  all.forEach(p=>{
+    let div=document.createElement("div");
+    div.className="post";
+
+    div.innerHTML=`
       <div>
         <span class="user" onclick="openProfile('${p.user}')">
           @${p.user}
-          ${verified ? '<img class="verified" src="verified.png">' : ''}
+          ${isVerified(p.user)?'<img class="verified" src="verified.png">':''}
         </span>
 
         <button class="follow-btn" onclick="toggleFollow('${p.user}')">
@@ -344,12 +325,17 @@ function loadFeed() {
       <div>${p.text}</div>
 
       <div class="upvote" onclick="upvote(${p.id})">
-        ▲ ${p.likes?.length || 0}
+        ▲ ${p.likes?.length||0}
       </div>
 
       <div style="font-size:11px;color:#777;">
         ${p.time}
       </div>
+
+      ${p.user===currentUser?`
+        <div class="delete" onclick="deletePost(${p.id},'${p.user}')">
+          delete
+        </div>`:""}
     `;
 
     box.appendChild(div);
@@ -357,32 +343,91 @@ function loadFeed() {
 }
 
 /* PROFILE */
-function loadProfile() {
-  let users = getUsers();
-  let u = users[viewingUser || currentUser];
-
-  profileName.innerHTML =
-    "@" + (viewingUser || currentUser) +
-    (isVerified(viewingUser || currentUser) ? ' <img class="verified" src="verified.png">' : '');
-
-  profilePic.src = u.pic || "";
-  profileFollowers.innerText = "Followers: " + (u.followers?.length || 0);
+function openProfile(user){
+  viewingUser=user;
+  loadProfile();
 }
 
-/* PROFILE IMAGE */
-function updateProfile() {
-  let users = getUsers();
+function loadProfile(){
+  let users=getUsers();
+  let u=users[viewingUser||currentUser];
 
-  let file = profileUpload.files[0];
-  if (!file) return;
+  profileName.innerHTML=
+    "@"+(viewingUser||currentUser)+
+    (isVerified(viewingUser||currentUser)?
+      ' <img class="verified" src="verified.png">':"");
 
-  let r = new FileReader();
-  r.onload = e => {
-    users[currentUser].pic = e.target.result;
+  profilePic.src = u.pic || "empty.jpg";
+  profileFollowers.innerText="Followers: "+(u.followers?.length||0);
+}
+
+/* PROFILE PIC */
+function updateProfile(){
+  let users=getUsers();
+  let file=profileUpload.files[0];
+  if(!file) return;
+
+  let r=new FileReader();
+  r.onload=e=>{
+    users[currentUser].pic=e.target.result;
     saveUsers(users);
     loadProfile();
   };
   r.readAsDataURL(file);
+}
+
+/* MESSAGES FIX */
+function sendMessage(){
+  let users=getUsers();
+  let to=msgUser.value.trim();
+  let text=msgText.value.trim();
+
+  if(!users[to]||!text) return;
+
+  users[currentUser].messages ||= {};
+  users[to].messages ||= {};
+
+  users[currentUser].messages[to] ||= [];
+  users[to].messages[currentUser] ||= [];
+
+  let msg={from:currentUser,text};
+
+  users[currentUser].messages[to].push(msg);
+  users[to].messages[currentUser].push(msg);
+
+  saveUsers(users);
+
+  msgText.value="";
+  loadInbox();
+}
+
+function loadInbox(){
+  let users=getUsers();
+  let box=messageList;
+  box.innerHTML="";
+
+  let convos=users[currentUser].messages||{};
+
+  Object.keys(convos).forEach(user=>{
+    let div=document.createElement("div");
+    div.innerText="@"+user;
+    div.onclick=()=>openChat(user);
+    box.appendChild(div);
+  });
+}
+
+function openChat(user){
+  let users=getUsers();
+  let box=messageList;
+  box.innerHTML="";
+
+  let msgs=users[currentUser].messages[user]||[];
+
+  msgs.forEach(m=>{
+    let div=document.createElement("div");
+    div.innerText=m.from+": "+m.text;
+    box.appendChild(div);
+  });
 }
 </script>
 
