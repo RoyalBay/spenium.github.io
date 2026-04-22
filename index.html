@@ -79,18 +79,6 @@ button {
   position:relative;
 }
 
-.follow-btn {
-  font-size:10px;
-  padding:2px 5px;
-  width:auto;
-  margin-left:8px;
-}
-
-.upvote {
-  cursor:pointer;
-  font-size:12px;
-}
-
 .delete {
   position:absolute;
   bottom:5px;
@@ -107,26 +95,9 @@ button {
   border-radius:6px;
 }
 
-.profile-name {
-  font-weight:bold;
-}
-
 .verified {
   width:14px;
   vertical-align:middle;
-}
-
-#messageList div {
-  padding:6px;
-  border-bottom:1px solid #eee;
-  cursor:pointer;
-}
-
-#chatBox div {
-  padding:6px;
-  margin:4px 0;
-  background:#f1f1f1;
-  border-radius:4px;
 }
 </style>
 </head>
@@ -138,8 +109,6 @@ button {
 <!-- WELCOME -->
 <div id="welcome" class="screen center card" style="display:block;">
   <h2>just WUPHF it.</h2>
-  <p>whenever. wherever.</p>
-
   <button onclick="showScreen('login')">Login</button>
   <button onclick="showScreen('signup')">Create Account</button>
 </div>
@@ -164,7 +133,6 @@ button {
 
 <!-- APP -->
 <div id="app" class="screen">
-
   <div class="container">
 
     <div class="sidebar card">
@@ -187,7 +155,6 @@ button {
       <input id="msgUser" placeholder="Username">
       <textarea id="msgText"></textarea>
       <button onclick="sendMessage()">Send</button>
-
       <div id="messageList"></div>
       <div id="chatBox"></div>
     </div>
@@ -197,10 +164,13 @@ button {
       <h3>Profile</h3>
 
       <img id="profilePic" class="profile-pic" src="empty.jpg">
-      <input type="file" accept="image/*" onchange="updatePic(event)">
+      <input type="file" onchange="updatePic(event)">
 
       <p id="profileName"></p>
       <p id="profileFollowers"></p>
+
+      <button onclick="refreshProfile()">Update Profile</button>
+      <div id="followArea"></div>
     </div>
 
   </div>
@@ -218,18 +188,19 @@ function showScreen(id){
 }
 
 function showTab(tab){
-  feed.style.display="none";
-  messages.style.display="none";
-
+  document.getElementById("feed").style.display="none";
+  document.getElementById("messages").style.display="none";
   document.getElementById(tab).style.display="block";
 
   if(tab==="feed") loadFeed();
   if(tab==="messages") loadInbox();
+
   loadProfile();
 }
 
 function goHome(){
   if(currentUser){
+    viewingUser=null;
     showScreen("app");
     showTab("feed");
   } else {
@@ -247,6 +218,7 @@ function getUsers(){
     u[k].following ||= [];
     u[k].messages ||= {};
     u[k].pic ||= "empty.jpg";
+    u[k].verified ||= false;
   });
 
   return u;
@@ -256,55 +228,41 @@ function saveUsers(u){
   localStorage.setItem("users",JSON.stringify(u));
 }
 
-/* LOGIN FIXED */
+/* LOGIN (FIXED + STABLE) */
 function login(){
   let users=getUsers();
-
   let u=loginUser.value.trim();
   let p=loginPass.value;
 
-  if(!users[u]){
-    loginError.innerText="Incorrect username";
-    return;
-  }
-
-  if(users[u].password!==p){
-    loginError.innerText="Incorrect password";
-    return;
-  }
+  if(!users[u]) return loginError.innerText="Incorrect username";
+  if(users[u].password!==p) return loginError.innerText="Incorrect password";
 
   currentUser=u;
+
   showScreen("app");
   showTab("feed");
 }
 
-/* SIGNUP FIXED */
+/* SIGNUP */
 function createAccount(){
   let users=getUsers();
-
   let u=signupUser.value.trim();
   let p=signupPass.value;
 
-  if(users[u]){
-    signupError.innerText="Username already exists";
-    return;
+  if(users[u]) return signupError.innerText="Username exists";
+
+  users[u]={password:p,posts:[],followers:[],following:[],messages:{},pic:"empty.jpg",verified:false};
+
+  // first user auto verified
+  if(Object.keys(users).length===1){
+    users[u].verified=true;
   }
 
-  users[u]={
-    password:p,
-    posts:[],
-    followers:[],
-    following:[],
-    messages:{},
-    pic:"empty.jpg"
-  };
-
   saveUsers(users);
-
-  signupError.innerText="Account created. Login.";
+  signupError.innerText="Account created.";
 }
 
-/* POSTS RESTORED */
+/* POSTS */
 function addPost(){
   let users=getUsers();
   let text=postText.value.trim();
@@ -314,15 +272,15 @@ function addPost(){
     id:Date.now(),
     user:currentUser,
     text,
-    time:new Date().toLocaleString(),
-    likes:[]
+    time:new Date().toLocaleString()
   });
 
   saveUsers(users);
+  postText.value="";
   loadFeed();
 }
 
-/* FEED RESTORED */
+/* FEED */
 function loadFeed(){
   let users=getUsers();
   posts.innerHTML="";
@@ -332,57 +290,77 @@ function loadFeed(){
   all.sort((a,b)=>b.id-a.id);
 
   all.forEach(p=>{
+    let verified = users[p.user].verified ? "✔️" : "";
+
     let div=document.createElement("div");
     div.className="post";
 
     div.innerHTML=`
       <div class="user" onclick="openProfile('${p.user}')">
-        @${p.user}
+        @${p.user} ${verified}
       </div>
-
       <div>${p.text}</div>
-
-      <div style="font-size:11px;color:#777;">
-        ${p.time}
-      </div>
-
-      ${p.user===currentUser?
-        `<div class="delete" onclick="deletePost(${p.id})">delete</div>`:""}
+      <div style="font-size:11px;color:#777;">${p.time}</div>
+      ${p.user===currentUser?`<div class="delete" onclick="deletePost(${p.id})">delete</div>`:""}
     `;
 
     posts.appendChild(div);
   });
 }
 
-/* DELETE RESTORED */
+/* DELETE */
 function deletePost(id){
   let users=getUsers();
-  users[currentUser].posts =
-    users[currentUser].posts.filter(p=>p.id!==id);
-
+  users[currentUser].posts=users[currentUser].posts.filter(p=>p.id!==id);
   saveUsers(users);
   loadFeed();
 }
 
-/* PROFILE RESTORED (THIS WAS YOUR MISSING BUG) */
+/* PROFILE */
 function loadProfile(){
   let users=getUsers();
-  let u=users[viewingUser||currentUser];
+  let user=viewingUser||currentUser;
+  let u=users[user];
 
   if(!u) return;
 
   profilePic.src=u.pic;
-
-  profileName.innerHTML="<b>@"+(viewingUser||currentUser)+"</b>";
+  profileName.innerHTML=`<b>@${user}</b> ${u.verified?"✔️":""}`;
   profileFollowers.innerText="Followers: "+u.followers.length;
+
+  followArea.innerHTML="";
+
+  if(user!==currentUser){
+    let isFollowing=users[currentUser].following.includes(user);
+
+    let btn=document.createElement("button");
+    btn.innerText=isFollowing?"Unfollow":"Follow";
+    btn.onclick=()=>toggleFollow(user);
+
+    followArea.appendChild(btn);
+  }
 }
 
-function openProfile(u){
-  viewingUser=u;
+/* FOLLOW */
+function toggleFollow(user){
+  let users=getUsers();
+
+  let me=users[currentUser];
+  let them=users[user];
+
+  if(me.following.includes(user)){
+    me.following=me.following.filter(u=>u!==user);
+    them.followers=them.followers.filter(u=>u!==currentUser);
+  } else {
+    me.following.push(user);
+    them.followers.push(currentUser);
+  }
+
+  saveUsers(users);
   loadProfile();
 }
 
-/* PROFILE PIC RESTORED */
+/* PROFILE PIC */
 function updatePic(e){
   let file=e.target.files[0];
   if(!file) return;
@@ -397,7 +375,16 @@ function updatePic(e){
   r.readAsDataURL(file);
 }
 
-/* MESSAGES (UNCHANGED WORKING CORE) */
+function refreshProfile(){
+  loadProfile();
+}
+
+function openProfile(u){
+  viewingUser=u;
+  loadProfile();
+}
+
+/* MESSAGES */
 function sendMessage(){
   let users=getUsers();
   let to=msgUser.value.trim();
@@ -415,6 +402,7 @@ function sendMessage(){
 
   saveUsers(users);
 
+  msgText.value="";
   loadInbox();
   loadChat(to);
 }
@@ -442,7 +430,11 @@ function loadChat(u){
   });
 }
 
-/* FOLLOW/VERIFY STAYS IMPLIED FROM YOUR PREVIOUS VERSION */
+function logout(){
+  currentUser=null;
+  viewingUser=null;
+  showScreen("welcome");
+}
 
 </script>
 
