@@ -14,13 +14,13 @@ body {
 .topbar {
   background:#3b5998;
   color:white;
-  padding:10px;
+  padding:8px 12px;
   display:flex;
   justify-content:space-between;
   align-items:center;
 }
 
-/* LOGO */
+/* LOGO FIX */
 .logo {
   display:flex;
   align-items:center;
@@ -30,8 +30,9 @@ body {
 }
 
 .logo img {
-  width:28px;
-  height:28px;
+  height:30px;
+  width:auto;
+  object-fit:contain;
 }
 
 /* BUTTON */
@@ -51,7 +52,7 @@ button {
   gap:10px;
 }
 
-/* PROFILE CARDS (Vista style) */
+/* PROFILE CARD */
 .profileCard {
   width:220px;
   background:white;
@@ -63,7 +64,6 @@ button {
 .profileHeader {
   display:flex;
   gap:10px;
-  align-items:flex-start;
 }
 
 /* PIC */
@@ -74,13 +74,18 @@ button {
   object-fit:cover;
 }
 
-/* TEXT */
-.profileInfo {
-  font-size:13px;
-}
-
+/* INFO */
 .profileInfo b {
   display:block;
+}
+
+/* EXTRA SPACING FIX */
+.profileCard input {
+  margin-top:15px;
+}
+
+.profileCard button {
+  margin-top:8px;
 }
 
 /* FEED */
@@ -139,8 +144,6 @@ textarea {
 <body>
 
 <div class="topbar">
-
-  <!-- LOGO -->
   <div class="logo">
     <img src="Facebook.jpg">
     <span>WUPHF</span>
@@ -172,9 +175,8 @@ textarea {
   <div id="posts"></div>
 </div>
 
-<!-- RIGHT PROFILE (YOU) -->
+<!-- RIGHT PROFILE -->
 <div class="profileCard">
-
   <div class="profileHeader">
     <img id="rightPic">
     <div class="profileInfo">
@@ -183,10 +185,8 @@ textarea {
     </div>
   </div>
 
-  <!-- ONLY YOUR PROFILE CONTROLS -->
   <input type="file" onchange="upload(event)">
   <button onclick="savePic()">Update Profile Picture</button>
-
 </div>
 
 </div>
@@ -208,36 +208,27 @@ if(!currentUser) location="index.html";
 function getUsers(){
   let u=JSON.parse(localStorage.getItem("users")||"{}");
   Object.keys(u).forEach(k=>{
-    u[k].posts||=[];
-    u[k].followers||=[];
-    u[k].pic||="";
+    u[k].posts ||= [];
+    u[k].followers ||= [];
+    u[k].pic ||= "";
   });
   return u;
 }
+
 function saveUsers(u){
   localStorage.setItem("users",JSON.stringify(u));
 }
 
-/* NAV */
-function logout(){
-  localStorage.removeItem("currentUser");
-  location="index.html";
-}
-function goSettings(){
-  location="settings.html";
-}
-
-/* VERIFIED ◆ */
+/* VERIFIED */
 function verified(u){
   return u.followers.length>=100 ? " ◆" : "";
 }
 
-/* SHOW LEFT PROFILE */
+/* SHOW USER */
 function showUser(user){
   let u=getUsers();
 
   leftProfile.style.display="block";
-
   leftPic.src=u[user].pic||"";
   leftName.innerHTML="@"+user+verified(u[user]);
   leftFollowers.innerText="Followers: "+u[user].followers.length;
@@ -284,29 +275,31 @@ function post(){
 function like(id){
   let u=getUsers();
 
-  Object.values(u).forEach(x=>{
-    x.posts.forEach(p=>{
+  for(let user in u){
+    u[user].posts.forEach(p=>{
       if(p.id===id){
-        if(p.likedBy.includes(currentUser)) return;
-
-        p.likes++;
-        p.likedBy.push(currentUser);
+        if(!p.likedBy.includes(currentUser)){
+          p.likedBy.push(currentUser);
+          p.likes = p.likedBy.length;
+        }
       }
     });
-  });
+  }
 
   saveUsers(u);
   load();
 }
 
-/* FOLLOW */
+/* FOLLOW (FIXED UI UPDATE) */
 function follow(target){
   let u=getUsers();
   let f=u[target].followers;
 
-  if(f.includes(currentUser))
+  if(f.includes(currentUser)){
     u[target].followers=f.filter(x=>x!==currentUser);
-  else f.push(currentUser);
+  } else {
+    f.push(currentUser);
+  }
 
   saveUsers(u);
   load();
@@ -357,7 +350,6 @@ function load(){
     posts.appendChild(div);
   });
 
-  /* RIGHT PROFILE */
   rightPic.src=u[currentUser].pic||"";
   rightName.innerHTML="@"+currentUser;
   rightFollowers.innerText="Followers: "+u[currentUser].followers.length;
