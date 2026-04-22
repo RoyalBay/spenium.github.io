@@ -5,16 +5,23 @@
 <title>Feed</title>
 
 <style>
-body { margin:0; font-family:Tahoma; }
+body {
+  margin:0;
+  font-family:Tahoma;
+}
 
+/* TOP BAR */
 .topbar {
   background:#3b5998;
   color:white;
   padding:12px;
   display:flex;
   justify-content:space-between;
+  font-weight:bold;
+  font-size:20px;
 }
 
+/* BUTTON */
 button {
   background:#3b5998;
   color:white;
@@ -23,25 +30,46 @@ button {
   cursor:pointer;
 }
 
+/* LAYOUT */
 .container {
-  max-width:1000px;
+  max-width:1100px;
   margin:20px auto;
   display:flex;
   gap:10px;
 }
 
-/* FEED */
-.feed { flex:1; background:white; padding:10px; }
+/* LEFT PROFILE (CLICKED USER) */
+.leftProfile {
+  width:220px;
+  background:white;
+  padding:10px;
+  text-align:center;
+  display:none;
+}
 
-/* PROFILE SIDE */
-.profile {
-  width:250px;
+.leftProfile img {
+  width:80px;
+  height:80px;
+  border-radius:6px;
+  object-fit:cover;
+}
+
+/* FEED */
+.feed {
+  flex:1;
+  background:white;
+  padding:10px;
+}
+
+/* RIGHT PROFILE (YOU) */
+.rightProfile {
+  width:220px;
   background:white;
   padding:10px;
   text-align:center;
 }
 
-.profile img {
+.rightProfile img {
   width:80px;
   height:80px;
   border-radius:6px;
@@ -54,6 +82,7 @@ textarea {
   height:70px;
   resize:none;
   padding:8px;
+  box-sizing:border-box;
 }
 
 /* POSTS */
@@ -96,7 +125,7 @@ textarea {
 <body>
 
 <div class="topbar">
-  <div onclick="goProfile(currentUser)">WUPHF</div>
+  <div><b>WUPHF</b></div>
   <div>
     <button onclick="goSettings()">Settings</button>
     <button onclick="logout()">Logout</button>
@@ -105,16 +134,25 @@ textarea {
 
 <div class="container">
 
+<!-- LEFT PROFILE (CLICKED USER) -->
+<div id="leftProfile" class="leftProfile">
+  <img id="leftPic">
+  <h3 id="leftName"></h3>
+  <p id="leftFollowers"></p>
+</div>
+
+<!-- FEED -->
 <div class="feed">
   <textarea id="text"></textarea>
   <button onclick="post()">Post</button>
   <div id="posts"></div>
 </div>
 
-<div class="profile">
-  <img id="sidePic">
-  <h3 id="name"></h3>
-  <p id="followers"></p>
+<!-- RIGHT PROFILE (YOU) -->
+<div class="rightProfile">
+  <img id="rightPic">
+  <h3 id="rightName"></h3>
+  <p id="rightFollowers"></p>
 </div>
 
 </div>
@@ -142,16 +180,32 @@ function getUsers(){
   });
   return u;
 }
-function saveUsers(u){ localStorage.setItem("users",JSON.stringify(u)); }
+function saveUsers(u){
+  localStorage.setItem("users",JSON.stringify(u));
+}
 
 /* NAV */
-function logout(){ localStorage.removeItem("currentUser"); location="index.html"; }
-function goSettings(){ location="settings.html"; }
-function goProfile(u){ location="profile.html?user="+u; }
+function logout(){
+  localStorage.removeItem("currentUser");
+  location="index.html";
+}
+function goSettings(){
+  location="settings.html";
+}
 
-/* VERIFIED (DIAMOND) */
+/* VERIFIED ◆ */
 function verified(u){
   return u.followers.length>=100 ? " ◆" : "";
+}
+
+/* SHOW LEFT PROFILE */
+function showUser(user){
+  let u=getUsers();
+
+  leftProfile.style.display="block";
+  leftPic.src=u[user].pic||"";
+  leftName.innerHTML="<b>@"+user+verified(u[user])+"</b>";
+  leftFollowers.innerText="Followers: "+u[user].followers.length;
 }
 
 /* POST */
@@ -229,7 +283,7 @@ function load(){
     div.innerHTML=`
       <div>
         <img src="${u[p.user].pic || ""}">
-        <span class="user" onclick="goProfile('${p.user}')">
+        <span class="user" onclick="showUser('${p.user}')">
           @${p.user}${verified(u[p.user])}
         </span>
         <button class="follow-btn" onclick="follow('${p.user}')">
@@ -248,10 +302,10 @@ function load(){
     posts.appendChild(div);
   });
 
-  /* SIDE PROFILE */
-  sidePic.src=u[currentUser].pic || "";
-  name.innerHTML="<b>@"+currentUser+"</b>";
-  followers.innerText="Followers: "+u[currentUser].followers.length;
+  /* RIGHT PROFILE (YOU) */
+  rightPic.src=u[currentUser].pic||"";
+  rightName.innerHTML="<b>@"+currentUser+"</b>";
+  rightFollowers.innerText="Followers: "+u[currentUser].followers.length;
 }
 
 load();
