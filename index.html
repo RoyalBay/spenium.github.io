@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -79,12 +80,13 @@ textarea {
 .like-btn {
   cursor: pointer;
   color: #3b5998;
+  margin-right: 10px;
 }
 
-.badge {
-  color: gold;
+.delete-btn {
+  cursor: pointer;
+  color: red;
   font-size: 12px;
-  margin-left: 5px;
 }
 
 .small {
@@ -92,6 +94,15 @@ textarea {
   color: #777;
 }
 
+.profile-pic {
+  width: 90px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 6px;
+  display: block;
+}
+
+/* DEV PANEL (hidden by default) */
 #devPanel {
   display: none;
   position: fixed;
@@ -158,10 +169,9 @@ textarea {
 
 </div>
 
-<!-- DEV PANEL -->
+<!-- DEV TOOLS -->
 <div id="devPanel">
   <b>DEV TOOLS</b><br><br>
-
   <input id="devUser" placeholder="User" />
   <button onclick="addFollowerDev()">+ Followers</button>
 </div>
@@ -211,18 +221,16 @@ function login() {
   loadFeed();
 }
 
-/* LOGOUT */
 function logout() {
   location.reload();
 }
 
-/* TABS */
 function showTab(tab) {
   feed.style.display = tab === "feed" ? "block" : "none";
   profile.style.display = tab === "profile" ? "block" : "none";
 }
 
-/* POSTS */
+/* POST */
 function addPost() {
   let users = getUsers();
   let text = postText.value.trim();
@@ -249,6 +257,7 @@ function likePost(id) {
     (u.posts || []).forEach(p => {
       if (p.id === id) {
         p.likes ||= [];
+
         if (!p.likes.includes(currentUser)) {
           p.likes.push(currentUser);
         } else {
@@ -256,6 +265,22 @@ function likePost(id) {
         }
       }
     });
+  });
+
+  saveUsers(users);
+  loadFeed();
+}
+
+/* DELETE */
+function deletePost(id) {
+  let users = getUsers();
+
+  Object.values(users).forEach(u => {
+    if (u.posts) {
+      u.posts = u.posts.filter(p =>
+        !(p.id === id && (p.user === currentUser || currentUser === "wuphf"))
+      );
+    }
   });
 
   saveUsers(users);
@@ -316,7 +341,7 @@ function loadFeed() {
       <div class="post-header">
         <div>
           <span class="user">@${p.user}</span>
-          ${verified ? '<span class="badge">✔</span>' : ''}
+          ${verified ? '<img src="verified.png" width="14">' : ''}
         </div>
 
         <button class="follow-btn" onclick="toggleFollow('${p.user}')">
@@ -326,8 +351,14 @@ function loadFeed() {
 
       <div>${p.text}</div>
 
-      <div class="like-btn" onclick="likePost(${p.id})">
-        👍 ${p.likes?.length || 0} ${liked ? "(you)" : ""}
+      <div>
+        <span class="like-btn" onclick="likePost(${p.id})">
+          👍 ${p.likes?.length || 0} ${liked ? "(you)" : ""}
+        </span>
+
+        <span class="delete-btn" onclick="deletePost(${p.id})">
+          🗑 Delete
+        </span>
       </div>
 
       <div class="small">${p.time}</div>
@@ -381,6 +412,14 @@ function addFollowerDev() {
   loadProfile();
   loadFeed();
 }
+
+/* KEYBIND */
+document.addEventListener("keydown", e => {
+  if (currentUser === "wuphf" && e.ctrlKey && e.shiftKey && e.key === "D") {
+    devPanel.style.display =
+      devPanel.style.display === "block" ? "none" : "block";
+  }
+});
 </script>
 
 </body>
