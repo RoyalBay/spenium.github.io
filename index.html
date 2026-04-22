@@ -39,11 +39,11 @@ body.dynamic {
   font-weight:bold;
 }
 
-.nav-buttons button {
+.nav button {
   width:auto;
-  margin-right:6px;
-  padding:5px 10px;
-  background:#2d4373;
+  margin-left:6px;
+  padding:6px 10px;
+  background:#3b5998;   /* FIXED BLUE BUTTONS */
   color:white;
   border:none;
   cursor:pointer;
@@ -59,10 +59,9 @@ body.dynamic {
   margin:20px auto;
 }
 
-/* WIDE FEED */
+/* FEED WIDE */
 .feed {
   flex:1;
-  min-height:600px;
 }
 
 /* PROFILE RIGHT */
@@ -112,10 +111,14 @@ input, textarea {
   cursor:pointer;
 }
 
-.follow-btn {
+/* BUTTONS */
+button {
   width:auto;
-  font-size:11px;
-  padding:3px 6px;
+  padding:6px 10px;
+  background:#3b5998;
+  color:white;
+  border:none;
+  cursor:pointer;
 }
 
 /* LIKE */
@@ -125,7 +128,7 @@ input, textarea {
   margin-top:6px;
 }
 
-/* DELETE */
+/* DELETE FIXED */
 .delete {
   position:absolute;
   bottom:5px;
@@ -139,8 +142,8 @@ input, textarea {
 .profile-pic {
   width:90px;
   height:90px;
-  border-radius:6px;
   object-fit:cover;
+  border-radius:6px;
 }
 
 .verified {
@@ -148,7 +151,7 @@ input, textarea {
   color:#f5c542;
 }
 
-/* SETTINGS PAGE */
+/* SETTINGS */
 .settings-page {
   display:none;
   max-width:600px;
@@ -171,11 +174,11 @@ body.dynamic .settings-card {
 
 <body class="light">
 
-<!-- TOP BAR -->
+<!-- TOP BAR (NOW ALWAYS CLICKABLE) -->
 <div class="topbar">
-  <div>WUPHF</div>
+  <div onclick="goHome()" style="cursor:pointer;">WUPHF</div>
 
-  <div class="nav-buttons">
+  <div class="nav">
     <button onclick="showTab('feed')">Feed</button>
     <button onclick="showTab('messages')">Messages</button>
     <button onclick="openSettings()">Settings</button>
@@ -183,44 +186,36 @@ body.dynamic .settings-card {
   </div>
 </div>
 
-<!-- WELCOME -->
+<!-- LOGIN / SIGNUP -->
 <div id="welcome" class="screen card" style="display:block; max-width:400px; margin:80px auto;">
   <h2>just WUPHF it.</h2>
-  <p>whenever. wherever.</p>
   <button onclick="showScreen('login')">Login</button>
-  <button onclick="showScreen('signup')">Create Account</button>
+  <button onclick="showScreen('signup')">Create</button>
 </div>
 
-<!-- LOGIN -->
 <div id="login" class="screen card" style="max-width:400px; margin:80px auto;">
-  <h3>Login</h3>
   <input id="loginUser">
   <input id="loginPass" type="password">
-  <div id="loginError" style="color:red;font-size:12px;"></div>
+  <div id="loginError" style="color:red;"></div>
   <button onclick="login()">Enter</button>
 </div>
 
-<!-- SIGNUP -->
 <div id="signup" class="screen card" style="max-width:400px; margin:80px auto;">
-  <h3>Create Account</h3>
   <input id="signupUser">
   <input id="signupPass" type="password">
   <div id="signupError"></div>
   <button onclick="createAccount()">Create</button>
 </div>
 
-<!-- SETTINGS PAGE -->
+<!-- SETTINGS -->
 <div id="settingsPage" class="settings-page">
   <div class="settings-card">
     <h2>Settings</h2>
-
     <h3>Themes</h3>
     <button onclick="setTheme('light')">Light</button>
     <button onclick="setTheme('dark')">Dark</button>
     <button onclick="setTheme('dynamic')">Dynamic</button>
-
-    <p>More settings coming soon.</p>
-
+    <p>More settings coming soon</p>
     <button onclick="exitSettings()">Back</button>
   </div>
 </div>
@@ -252,7 +247,7 @@ body.dynamic .settings-card {
 
 </div>
 
-<!-- MESSAGES -->
+<!-- MESSAGES (FIXED NO PROFILE LEAK) -->
 <div id="messages" class="card" style="display:none; max-width:900px; margin:20px auto;">
   <h3>Messages</h3>
   <input id="msgUser">
@@ -269,33 +264,38 @@ body.dynamic .settings-card {
 
 let currentUser=null;
 let viewingUser=null;
-let likedMap={}; // prevents multi-like per user
+let activeChat=null;
 
-/* NAV */
+/* NAV SAFE */
 function showScreen(id){
   document.querySelectorAll(".screen").forEach(s=>s.style.display="none");
   document.getElementById(id).style.display="block";
 }
 
+/* FIX SETTINGS LOCK ISSUE */
 function showTab(tab){
-  feed.style.display="block";
-  messages.style.display="none";
+  document.getElementById("feed").style.display="none";
+  document.getElementById("messages").style.display="none";
+
+  if(tab==="feed"){
+    document.getElementById("feed").style.display="block";
+    loadFeed();
+  }
 
   if(tab==="messages"){
-    feed.style.display="none";
-    messages.style.display="block";
+    document.getElementById("messages").style.display="block";
     loadInbox();
   }
 
-  if(tab==="feed") loadFeed();
   loadProfile();
 }
 
-/* SETTINGS */
+/* SETTINGS SAFE */
 function openSettings(){
   document.getElementById("app").style.display="none";
   document.getElementById("settingsPage").style.display="block";
 }
+
 function exitSettings(){
   document.getElementById("settingsPage").style.display="none";
   document.getElementById("app").style.display="block";
@@ -342,6 +342,7 @@ function addPost(){
     id:Date.now(),
     user:currentUser,
     text,
+    time:new Date().toLocaleString(),
     likes:0
   });
 
@@ -362,25 +363,18 @@ function loadFeed(){
 
     let verified = users[p.user].verified ? "◆" : "";
 
-    let isFollowing = users[currentUser].following.includes(p.user);
-
     let div=document.createElement("div");
     div.className="post";
 
     div.innerHTML=`
-      <div class="user-row">
-        <div class="user" onclick="openProfile('${p.user}')">
-          @${p.user} ${verified}
-        </div>
-
-        <button class="follow-btn" onclick="toggleFollow('${p.user}')">
-          ${isFollowing?"Unfollow":"Follow"}
-        </button>
+      <div class="user" onclick="openProfile('${p.user}')">
+        ${p.user} ${verified}
       </div>
 
       <div>${p.text}</div>
+      <div style="font-size:11px;color:gray;">${p.time}</div>
 
-      <button class="like-btn" onclick="likePost(${p.id})">▲ ${p.likes}</button>
+      <button onclick="likePost(${p.id})">▲ ${p.likes}</button>
 
       ${p.user===currentUser?`<div class="delete" onclick="deletePost(${p.id})">delete</div>`:""}
     `;
@@ -389,14 +383,9 @@ function loadFeed(){
   });
 }
 
-/* LIKE (1 PER USER FIX) */
+/* LIKE FIX */
 function likePost(id){
   let users=getUsers();
-
-  if(!likedMap[currentUser]) likedMap[currentUser]={};
-  if(likedMap[currentUser][id]) return;
-
-  likedMap[currentUser][id]=true;
 
   Object.values(users).forEach(u=>{
     u.posts.forEach(p=>{
@@ -408,37 +397,67 @@ function likePost(id){
   loadFeed();
 }
 
-/* FOLLOW */
-function toggleFollow(user){
+/* DELETE FIX */
+function deletePost(id){
   let users=getUsers();
-
-  let me=users[currentUser];
-  let them=users[user];
-
-  if(me.following.includes(user)){
-    me.following=me.following.filter(u=>u!==user);
-    them.followers=them.followers.filter(u=>u!==currentUser);
-  } else {
-    me.following.push(user);
-    them.followers.push(currentUser);
-  }
-
-  them.verified = them.followers.length>=100;
-
+  users[currentUser].posts=users[currentUser].posts.filter(p=>p.id!==id);
   saveUsers(users);
-  loadProfile();
   loadFeed();
 }
 
-/* PROFILE */
+/* PROFILE SAFE */
 function loadProfile(){
   let users=getUsers();
   let u=users[viewingUser||currentUser];
 
-  profilePic.src=u.pic;
+  if(!u) return;
 
+  profilePic.src=u.pic;
   profileName.innerHTML=`<b>@${viewingUser||currentUser}</b> ${u.verified?"◆":""}`;
   profileFollowers.innerText="Followers: "+u.followers.length;
+}
+
+/* MESSAGES FIXED */
+function sendMessage(){
+  let users=getUsers();
+  let to=msgUser.value;
+  let text=msgText.value;
+
+  if(!users[to]||!text) return;
+
+  users[currentUser].messages[to] ||= [];
+  users[to].messages[currentUser] ||= [];
+
+  let msg={from:currentUser,text};
+
+  users[currentUser].messages[to].push(msg);
+  users[to].messages[currentUser].push(msg);
+
+  saveUsers(users);
+  loadInbox();
+}
+
+function loadInbox(){
+  let users=getUsers();
+  messageList.innerHTML="";
+
+  Object.keys(users[currentUser].messages).forEach(u=>{
+    let div=document.createElement("div");
+    div.innerText="@"+u;
+    div.onclick=()=>loadChat(u);
+    messageList.appendChild(div);
+  });
+}
+
+function loadChat(u){
+  let users=getUsers();
+  chatBox.innerHTML="";
+
+  (users[currentUser].messages[u]||[]).forEach(m=>{
+    let div=document.createElement("div");
+    div.innerText=m.from+": "+m.text;
+    chatBox.appendChild(div);
+  });
 }
 
 /* PROFILE PIC */
