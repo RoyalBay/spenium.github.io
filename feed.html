@@ -2,12 +2,13 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Feed</title>
+<title>WUPHF Feed</title>
 
 <style>
 body{
   margin:0;
   font-family:Tahoma;
+  transition:0.3s;
 }
 
 /* TOP BAR */
@@ -20,7 +21,6 @@ body{
   align-items:center;
 }
 
-/* LOGO */
 .logo{
   display:flex;
   align-items:center;
@@ -41,20 +41,20 @@ body{
   gap:10px;
 }
 
-/* PROFILE CARD (FIXED VISTA STYLE) */
+/* PROFILE */
 .profileCard{
   width:220px;
   background:white;
   padding:10px;
   border-radius:4px;
-  text-align:center;   /* FIX IMPORTANT */
+  text-align:center;
 }
 
 .profileCard img{
   width:80px;
   height:80px;
-  border-radius:6px;
   object-fit:cover;
+  border-radius:6px;
   display:block;
   margin:0 auto 8px auto;
 }
@@ -75,7 +75,7 @@ textarea{
   box-sizing:border-box;
 }
 
-/* POSTS */
+/* POST */
 .post{
   border-top:1px solid #eee;
   padding:10px;
@@ -85,6 +85,23 @@ textarea{
   font-weight:bold;
   color:#3b5998;
   cursor:pointer;
+}
+
+.follow-btn{
+  margin-left:8px;
+  font-size:11px;
+}
+
+.delete{
+  float:right;
+  color:red;
+  cursor:pointer;
+}
+
+/* ICON ROW */
+.icon{
+  cursor:pointer;
+  color:#333;
 }
 </style>
 </head>
@@ -96,6 +113,11 @@ textarea{
   <div class="logo">
     <img src="Facebook.jpg">
     <span>WUPHF</span>
+  </div>
+
+  <div>
+    <button onclick="goSettings()">Settings</button>
+    <button onclick="logout()">Logout</button>
   </div>
 
 </div>
@@ -127,28 +149,49 @@ textarea{
 
 <script>
 
+let currentUser = localStorage.getItem("currentUser");
+if(!currentUser) location.href="index.html";
+
+/* STORAGE */
 function getUsers(){
-  let u=JSON.parse(localStorage.getItem("users")||"{}");
+  let u = JSON.parse(localStorage.getItem("users") || "{}");
+
   for(let k in u){
     u[k].posts ||= [];
     u[k].followers ||= [];
     u[k].pic ||= "";
   }
+
   return u;
 }
 
 function saveUsers(u){
-  localStorage.setItem("users",JSON.stringify(u));
+  localStorage.setItem("users", JSON.stringify(u));
 }
 
-/* PROFILE VIEW FIX */
+/* NAV */
+function logout(){
+  localStorage.removeItem("currentUser");
+  location.href="index.html";
+}
+
+function goSettings(){
+  location.href="settings.html";
+}
+
+/* VERIFIED DIAMOND */
+function verified(u){
+  return (u.followers?.length || 0) >= 100 ? " ◆" : "";
+}
+
+/* SHOW PROFILE */
 function showUser(user){
   let u=getUsers();
   if(!u[user]) return;
 
   leftProfile.style.display="block";
   leftPic.src=u[user].pic||"";
-  leftName.innerText="@"+user;
+  leftName.innerText="@"+user+verified(u[user]);
   leftFollowers.innerText="Followers: "+u[user].followers.length;
 }
 
@@ -171,41 +214,108 @@ function post(){
   load();
 }
 
-/* LOAD (unchanged logic assumed from previous working version) */
+/* LIKE / UNLIKE FIX */
+function like(id){
+  let u=getUsers();
+
+  for(let x in u){
+    for(let p of u[x].posts){
+      if(p.id===id){
+
+        p.likedBy ||= [];
+
+        if(p.likedBy.includes(currentUser)){
+          p.likedBy = p.likedBy.filter(u => u !== currentUser);
+        } else {
+          p.likedBy.push(currentUser);
+        }
+
+        p.likes = p.likedBy.length;
+      }
+    }
+  }
+
+  saveUsers(u);
+  load();
+}
+
+/* FOLLOW / UNFOLLOW */
+function follow(target){
+  let u=getUsers();
+  if(!u[target]) return;
+
+  let f=u[target].followers;
+
+  if(f.includes(currentUser)){
+    u[target].followers = f.filter(x=>x!==currentUser);
+  } else {
+    f.push(currentUser);
+  }
+
+  saveUsers(u);
+  load();
+}
+
+/* DELETE */
+function del(id){
+  let u=getUsers();
+  u[currentUser].posts = u[currentUser].posts.filter(p=>p.id!==id);
+  saveUsers(u);
+  load();
+}
+
+/* LOAD FEED */
 function load(){
   let u=getUsers();
   posts.innerHTML="";
 
   let all=[];
-  for(let x in u) all.push(...u[x].posts);
+  for(let x in u){
+    all.push(...u[x].posts);
+  }
+
   all.sort((a,b)=>b.id-a.id);
 
   all.forEach(p=>{
     let owner=u[p.user];
+    if(!owner) return;
+
+    let liked = (p.likedBy||[]).includes(currentUser);
+    let isFollow = owner.followers.includes(currentUser);
 
     let div=document.createElement("div");
     div.className="post";
 
     div.innerHTML=`
-      <span class="user" onclick="showUser('${p.user}')">
-        @${p.user}
-      </span>
+      <div>
+        <span class="user" onclick="showUser('${p.user}')">
+          @${p.user}${verified(owner)}
+        </span>
+
+        <button class="follow-btn" onclick="follow('${p.user}')">
+          ${isFollow ? "Unfollow" : "Follow"}
+        </button>
+      </div>
+
       <div>${p.text}</div>
       <div style="font-size:11px;color:#777;">${p.time}</div>
-      <div>▲ ${p.likes}</div>
+
+      <div class="icon" onclick="like(${p.id})">
+        ▲ ${p.likes} ${liked ? "(liked)" : ""}
+      </div>
+
+      ${p.user===currentUser ? `<div class="delete" onclick="del(${p.id})">delete</div>` : ""}
     `;
 
     posts.appendChild(div);
   });
 
   let me=u[currentUser];
+
   rightPic.src=me.pic||"";
   rightName.innerText="@"+currentUser;
   rightFollowers.innerText="Followers: "+me.followers.length;
 }
-
-let currentUser=localStorage.getItem("currentUser");
-if(!currentUser) location="index.html";
 
 load();
 
