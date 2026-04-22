@@ -11,11 +11,10 @@ body {
   margin: 0;
   font-family: Tahoma, Arial, sans-serif;
   background: linear-gradient(#dfe7f3, #f5f6f7);
-  color: #1c1e21;
 }
 
 .topbar {
-  background: linear-gradient(#4c66a4, #3b5998);
+  background: #3b5998;
   color: white;
   padding: 12px 18px;
   font-weight: bold;
@@ -27,7 +26,6 @@ body {
   max-width: 1000px;
   margin: 20px auto;
   display: none;
-  flex-direction: row;
   gap: 10px;
 }
 
@@ -38,17 +36,15 @@ body {
   box-shadow: 0 1px 2px rgba(0,0,0,0.06);
 }
 
-.sidebar { width: 160px; }
-#feed, #messages { flex: 1; }
-#profile { width: 260px; }
+.sidebar { width: 160px; float: left; }
+#feed, #messages, #profile { margin-left: 180px; }
 
 input, button, textarea {
   width: 100%;
   padding: 10px;
-  margin: 5px 0 10px;
+  margin: 5px 0;
   border: 1px solid #ccd0d5;
   border-radius: 3px;
-  box-sizing: border-box;
 }
 
 button {
@@ -68,8 +64,9 @@ textarea { height: 80px; resize: none; }
 }
 
 .post {
-  padding: 10px 0;
   border-top: 1px solid #eee;
+  padding: 10px 0;
+  position: relative;
 }
 
 .actions {
@@ -80,36 +77,23 @@ textarea { height: 80px; resize: none; }
   cursor: pointer;
 }
 
-.follow-btn {
+.delete {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
   font-size: 11px;
-  width: auto;
-  padding: 3px 6px;
-}
-
-.profile-pic {
-  width: 90px;
-  height: 90px;
-  border-radius: 6px;
-  object-fit: cover;
-  border: 2px solid #999;
-}
-
-.verified {
-  width: 14px;
-  vertical-align: middle;
-}
-
-.inbox-item {
-  padding: 10px;
-  border-bottom: 1px solid #eee;
+  color: red;
   cursor: pointer;
 }
 
-.chat-box {
-  border: 1px solid #ddd;
-  padding: 10px;
-  height: 200px;
-  overflow-y: auto;
+.small {
+  font-size: 11px;
+  color: #777;
+}
+
+.error {
+  color: red;
+  font-size: 12px;
 }
 </style>
 </head>
@@ -123,13 +107,13 @@ textarea { height: 80px; resize: none; }
   <h3>Login</h3>
   <input id="username" placeholder="Username" />
   <input id="password" type="password" placeholder="Password" />
+  <div id="loginError" class="error"></div>
   <button onclick="login()">Enter</button>
 </div>
 
 <!-- APP -->
 <div class="container" id="app">
 
-  <!-- SIDEBAR -->
   <div class="sidebar card">
     <button onclick="showTab('feed')">Feed</button>
     <button onclick="showTab('messages')">Inbox</button>
@@ -148,25 +132,19 @@ textarea { height: 80px; resize: none; }
   <div id="messages" class="card" style="display:none;">
     <h3>Inbox</h3>
 
-    <div id="inbox"></div>
+    <input id="msgUser" placeholder="Username" />
+    <textarea id="msgText"></textarea>
+    <button onclick="sendMessage()">Send</button>
 
-    <div id="chat" style="display:none;">
-      <h4 id="chatWith"></h4>
-      <div class="chat-box" id="chatBox"></div>
-
-      <textarea id="msgText"></textarea>
-      <button onclick="sendReply()">Reply</button>
-    </div>
+    <div id="messageList"></div>
   </div>
 
   <!-- PROFILE -->
   <div id="profile" class="card">
     <h3>Profile</h3>
-
-    <img id="profilePic" class="profile-pic" />
-
+    <img id="profilePic" width="90" height="90" style="border-radius:6px;object-fit:cover;" />
     <input type="file" id="profileUpload" />
-    <button onclick="updateProfile()">Update</button>
+    <button onclick="updateProfile()">Update Profile</button>
 
     <p id="profileName"></p>
     <p id="profileFollowers"></p>
@@ -176,8 +154,6 @@ textarea { height: 80px; resize: none; }
 
 <script>
 let currentUser = null;
-let viewingUser = null;
-let openChatUser = null;
 
 function getUsers() {
   return JSON.parse(localStorage.getItem("users") || "{}");
@@ -187,11 +163,13 @@ function saveUsers(u) {
   localStorage.setItem("users", JSON.stringify(u));
 }
 
-/* LOGIN */
+/* LOGIN (INLINE ERROR FIX) */
 function login() {
   let users = getUsers();
   let u = username.value;
   let p = password.value;
+
+  loginError.innerText = "";
 
   if (!users[u]) {
     users[u] = {
@@ -204,27 +182,20 @@ function login() {
     };
   }
 
-  if (users[u].password !== p) return alert("Wrong password");
+  if (users[u].password !== p) {
+    loginError.innerText = "Password incorrect";
+    return;
+  }
 
   currentUser = u;
   saveUsers(users);
 
   loginBox.style.display = "none";
-  app.style.display = "flex";
+  app.style.display = "block";
 
   showTab("feed");
   loadFeed();
   loadProfile();
-  loadInbox();
-}
-
-function logout() {
-  location.reload();
-}
-
-function goHome() {
-  viewingUser = null;
-  showTab("feed");
 }
 
 /* NAV */
@@ -236,33 +207,12 @@ function showTab(tab) {
   if (tab === "messages") loadInbox();
 }
 
-/* VERIFIED (100 FOLLOWERS RULE) */
-function isVerified(user) {
-  let users = getUsers();
-  return (users[user]?.followers?.length || 0) >= 100;
+function goHome() {
+  showTab("feed");
 }
 
-/* FOLLOW */
-function toggleFollow(user) {
-  let users = getUsers();
-
-  users[currentUser].following ||= [];
-  users[user].followers ||= [];
-
-  if (!users[currentUser].following.includes(user)) {
-    users[currentUser].following.push(user);
-    users[user].followers.push(currentUser);
-  } else {
-    users[currentUser].following =
-      users[currentUser].following.filter(x => x !== user);
-
-    users[user].followers =
-      users[user].followers.filter(x => x !== currentUser);
-  }
-
-  saveUsers(users);
-  loadProfile();
-  loadFeed();
+function logout() {
+  location.reload();
 }
 
 /* POSTS */
@@ -275,6 +225,7 @@ function addPost() {
     id: Date.now(),
     user: currentUser,
     text,
+    time: new Date().toLocaleString(),
     likes: []
   });
 
@@ -291,13 +242,24 @@ function upvote(id) {
     (u.posts || []).forEach(p => {
       if (p.id === id) {
         p.likes ||= [];
-        if (!p.likes.includes(currentUser)) {
-          p.likes.push(currentUser);
-        } else {
-          p.likes = p.likes.filter(x => x !== currentUser);
-        }
+        if (!p.likes.includes(currentUser)) p.likes.push(currentUser);
+        else p.likes = p.likes.filter(x => x !== currentUser);
       }
     });
+  });
+
+  saveUsers(users);
+  loadFeed();
+}
+
+/* DELETE (ONLY OWNER) */
+function deletePost(id, owner) {
+  if (owner !== currentUser) return;
+
+  let users = getUsers();
+
+  Object.values(users).forEach(u => {
+    u.posts = (u.posts || []).filter(p => p.id !== id);
   });
 
   saveUsers(users);
@@ -315,31 +277,25 @@ function loadFeed() {
     if (u.posts) posts.push(...u.posts);
   });
 
-  posts.sort((a, b) => b.id - a.id);
+  posts.sort((a,b)=>b.id-a.id);
 
   posts.forEach(p => {
-    let verified = isVerified(p.user);
-
     let div = document.createElement("div");
     div.className = "post";
 
     div.innerHTML = `
-      <div>
-        <span class="user" onclick="openProfile('${p.user}')">
-          @${p.user}
-          ${verified ? '<img class="verified" src="verified.png">' : ''}
-        </span>
-
-        <button class="follow-btn" onclick="toggleFollow('${p.user}')">
-          Follow
-        </button>
-      </div>
-
+      <div class="user">@${p.user}</div>
       <div>${p.text}</div>
 
       <div class="actions">
-        <span class="upvote" onclick="upvote(${p.id})">▲ ${p.likes?.length || 0}</span>
+        <span class="upvote" onclick="upvote(${p.id})">▲ ${p.likes?.length||0}</span>
       </div>
+
+      <div class="small">${p.time}</div>
+
+      ${p.user === currentUser ? 
+        `<div class="delete" onclick="deletePost(${p.id}, '${p.user}')">delete</div>` 
+        : ""}
     `;
 
     box.appendChild(div);
@@ -349,24 +305,14 @@ function loadFeed() {
 /* PROFILE */
 function loadProfile() {
   let users = getUsers();
-  let u = users[viewingUser || currentUser];
+  let u = users[currentUser];
 
-  profileName.innerHTML =
-    "@" + (viewingUser || currentUser) +
-    (isVerified(viewingUser || currentUser) ? ' <img class="verified" src="verified.png">' : '');
-
+  profileName.innerText = "@" + currentUser;
   profilePic.src = u.pic || "";
   profileFollowers.innerText = "Followers: " + (u.followers?.length || 0);
 }
 
-/* PROFILE VIEW */
-function openProfile(user) {
-  viewingUser = user;
-  loadProfile();
-  showTab("feed");
-}
-
-/* PROFILE UPLOAD */
+/* PROFILE IMAGE */
 function updateProfile() {
   let users = getUsers();
 
@@ -382,70 +328,63 @@ function updateProfile() {
   r.readAsDataURL(file);
 }
 
-/* ================= MESSAGES (INBOX SYSTEM) ================= */
+/* ================= MESSAGES (REAL INBOX + REPLY) ================= */
+
+function sendMessage() {
+  let users = getUsers();
+  let to = msgUser.value;
+  let text = msgText.value;
+
+  if (!users[to]) return;
+
+  users[currentUser].messages ||= {};
+  users[to].messages ||= {};
+
+  users[currentUser].messages[to] ||= [];
+  users[to].messages[currentUser] ||= [];
+
+  let msg = { from: currentUser, text };
+
+  users[currentUser].messages[to].push(msg);
+  users[to].messages[currentUser].push(msg);
+
+  saveUsers(users);
+
+  msgText.value = "";
+  loadInbox();
+}
 
 function loadInbox() {
   let users = getUsers();
-  let inbox = document.getElementById("inbox");
-  inbox.innerHTML = "";
+  let box = document.getElementById("messageList");
+  box.innerHTML = "";
 
-  let msgs = users[currentUser].messages || {};
+  let convos = users[currentUser].messages || {};
 
-  Object.keys(msgs).forEach(user => {
+  Object.keys(convos).forEach(user => {
     let div = document.createElement("div");
-    div.className = "inbox-item";
+    div.className = "card";
     div.innerText = "@" + user;
+
     div.onclick = () => openChat(user);
-    inbox.appendChild(div);
+
+    box.appendChild(div);
   });
 }
 
 function openChat(user) {
-  openChatUser = user;
-
-  document.getElementById("chat").style.display = "block";
-  document.getElementById("chatWith").innerText = "Chat with @" + user;
-
-  loadChat();
-}
-
-function loadChat() {
   let users = getUsers();
-  let chat = document.getElementById("chatBox");
-  chat.innerHTML = "";
+  let box = document.getElementById("messageList");
 
-  let msgs = users[currentUser].messages?.[openChatUser] || [];
+  box.innerHTML = "";
+
+  let msgs = users[currentUser].messages?.[user] || [];
 
   msgs.forEach(m => {
     let div = document.createElement("div");
-    div.innerHTML = `<b>${m.from}</b>: ${m.text}`;
-    chat.appendChild(div);
+    div.innerText = m.from + ": " + m.text;
+    box.appendChild(div);
   });
-}
-
-function sendReply() {
-  let users = getUsers();
-
-  users[currentUser].messages ||= {};
-  users[openChatUser].messages ||= {};
-
-  let msg = {
-    from: currentUser,
-    text: msgText.value
-  };
-
-  if (!users[currentUser].messages[openChatUser])
-    users[currentUser].messages[openChatUser] = [];
-
-  if (!users[openChatUser].messages[currentUser])
-    users[openChatUser].messages[currentUser] = [];
-
-  users[currentUser].messages[openChatUser].push(msg);
-  users[openChatUser].messages[currentUser].push(msg);
-
-  saveUsers(users);
-  msgText.value = "";
-  loadChat();
 }
 </script>
 
