@@ -68,50 +68,48 @@ textarea { height: 80px; resize: none; }
 }
 
 .post {
-  border-top: 1px solid #eee;
   padding: 10px 0;
-}
-
-.post-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  border-top: 1px solid #eee;
 }
 
 .actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 5px;
   font-size: 12px;
 }
 
 .upvote {
   cursor: pointer;
-  color: #444;
 }
 
 .follow-btn {
   font-size: 11px;
-  padding: 3px 6px;
   width: auto;
-}
-
-.small {
-  font-size: 11px;
-  color: #777;
+  padding: 3px 6px;
 }
 
 .profile-pic {
   width: 90px;
   height: 90px;
-  object-fit: cover;
   border-radius: 6px;
+  object-fit: cover;
   border: 2px solid #999;
 }
 
 .verified {
   width: 14px;
   vertical-align: middle;
+}
+
+.inbox-item {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
+
+.chat-box {
+  border: 1px solid #ddd;
+  padding: 10px;
+  height: 200px;
+  overflow-y: auto;
 }
 </style>
 </head>
@@ -131,12 +129,11 @@ textarea { height: 80px; resize: none; }
 <!-- APP -->
 <div class="container" id="app">
 
-  <div class="sidebar">
-    <div class="card">
-      <button onclick="showTab('feed')">Feed</button>
-      <button onclick="showTab('messages')">Messages</button>
-      <button onclick="logout()">Logout</button>
-    </div>
+  <!-- SIDEBAR -->
+  <div class="sidebar card">
+    <button onclick="showTab('feed')">Feed</button>
+    <button onclick="showTab('messages')">Inbox</button>
+    <button onclick="logout()">Logout</button>
   </div>
 
   <!-- FEED -->
@@ -149,11 +146,17 @@ textarea { height: 80px; resize: none; }
 
   <!-- MESSAGES -->
   <div id="messages" class="card" style="display:none;">
-    <h3>Messages</h3>
-    <input id="msgUser" placeholder="To user" />
-    <textarea id="msgText"></textarea>
-    <button onclick="sendMessage()">Send</button>
-    <div id="messageList"></div>
+    <h3>Inbox</h3>
+
+    <div id="inbox"></div>
+
+    <div id="chat" style="display:none;">
+      <h4 id="chatWith"></h4>
+      <div class="chat-box" id="chatBox"></div>
+
+      <textarea id="msgText"></textarea>
+      <button onclick="sendReply()">Reply</button>
+    </div>
   </div>
 
   <!-- PROFILE -->
@@ -174,6 +177,7 @@ textarea { height: 80px; resize: none; }
 <script>
 let currentUser = null;
 let viewingUser = null;
+let openChatUser = null;
 
 function getUsers() {
   return JSON.parse(localStorage.getItem("users") || "{}");
@@ -196,7 +200,7 @@ function login() {
       posts: [],
       followers: [],
       following: [],
-      messages: []
+      messages: {}
     };
   }
 
@@ -209,8 +213,18 @@ function login() {
   app.style.display = "flex";
 
   showTab("feed");
-  loadProfile();
   loadFeed();
+  loadProfile();
+  loadInbox();
+}
+
+function logout() {
+  location.reload();
+}
+
+function goHome() {
+  viewingUser = null;
+  showTab("feed");
 }
 
 /* NAV */
@@ -218,23 +232,14 @@ function showTab(tab) {
   feed.style.display = tab === "feed" ? "block" : "none";
   messages.style.display = tab === "messages" ? "block" : "none";
   profile.style.display = "block";
+
+  if (tab === "messages") loadInbox();
 }
 
-function goHome() {
-  viewingUser = null;
-  loadProfile();
-  showTab("feed");
-}
-
-function logout() {
-  location.reload();
-}
-
-/* PROFILE */
-function openProfile(user) {
-  viewingUser = user;
-  loadProfile();
-  showTab("feed");
+/* VERIFIED (100 FOLLOWERS RULE) */
+function isVerified(user) {
+  let users = getUsers();
+  return (users[user]?.followers?.length || 0) >= 100;
 }
 
 /* FOLLOW */
@@ -260,7 +265,7 @@ function toggleFollow(user) {
   loadFeed();
 }
 
-/* POST */
+/* POSTS */
 function addPost() {
   let users = getUsers();
   let text = postText.value.trim();
@@ -270,8 +275,7 @@ function addPost() {
     id: Date.now(),
     user: currentUser,
     text,
-    likes: [],
-    time: new Date().toLocaleString()
+    likes: []
   });
 
   saveUsers(users);
@@ -279,7 +283,7 @@ function addPost() {
   loadFeed();
 }
 
-/* LIKE (REDESIGNED - SIMPLE UPVOTE) */
+/* UPVOTE */
 function upvote(id) {
   let users = getUsers();
 
@@ -300,7 +304,7 @@ function upvote(id) {
   loadFeed();
 }
 
-/* FEED (FIXED LINKS + FOLLOW BUTTON + UPVOTE) */
+/* FEED */
 function loadFeed() {
   let users = getUsers();
   let box = document.getElementById("posts");
@@ -314,13 +318,16 @@ function loadFeed() {
   posts.sort((a, b) => b.id - a.id);
 
   posts.forEach(p => {
+    let verified = isVerified(p.user);
+
     let div = document.createElement("div");
     div.className = "post";
 
     div.innerHTML = `
-      <div class="post-header">
+      <div>
         <span class="user" onclick="openProfile('${p.user}')">
           @${p.user}
+          ${verified ? '<img class="verified" src="verified.png">' : ''}
         </span>
 
         <button class="follow-btn" onclick="toggleFollow('${p.user}')">
@@ -344,12 +351,22 @@ function loadProfile() {
   let users = getUsers();
   let u = users[viewingUser || currentUser];
 
-  profileName.innerHTML = "@" + (viewingUser || currentUser);
+  profileName.innerHTML =
+    "@" + (viewingUser || currentUser) +
+    (isVerified(viewingUser || currentUser) ? ' <img class="verified" src="verified.png">' : '');
+
   profilePic.src = u.pic || "";
   profileFollowers.innerText = "Followers: " + (u.followers?.length || 0);
 }
 
-/* PROFILE IMAGE */
+/* PROFILE VIEW */
+function openProfile(user) {
+  viewingUser = user;
+  loadProfile();
+  showTab("feed");
+}
+
+/* PROFILE UPLOAD */
 function updateProfile() {
   let users = getUsers();
 
@@ -363,6 +380,72 @@ function updateProfile() {
     loadProfile();
   };
   r.readAsDataURL(file);
+}
+
+/* ================= MESSAGES (INBOX SYSTEM) ================= */
+
+function loadInbox() {
+  let users = getUsers();
+  let inbox = document.getElementById("inbox");
+  inbox.innerHTML = "";
+
+  let msgs = users[currentUser].messages || {};
+
+  Object.keys(msgs).forEach(user => {
+    let div = document.createElement("div");
+    div.className = "inbox-item";
+    div.innerText = "@" + user;
+    div.onclick = () => openChat(user);
+    inbox.appendChild(div);
+  });
+}
+
+function openChat(user) {
+  openChatUser = user;
+
+  document.getElementById("chat").style.display = "block";
+  document.getElementById("chatWith").innerText = "Chat with @" + user;
+
+  loadChat();
+}
+
+function loadChat() {
+  let users = getUsers();
+  let chat = document.getElementById("chatBox");
+  chat.innerHTML = "";
+
+  let msgs = users[currentUser].messages?.[openChatUser] || [];
+
+  msgs.forEach(m => {
+    let div = document.createElement("div");
+    div.innerHTML = `<b>${m.from}</b>: ${m.text}`;
+    chat.appendChild(div);
+  });
+}
+
+function sendReply() {
+  let users = getUsers();
+
+  users[currentUser].messages ||= {};
+  users[openChatUser].messages ||= {};
+
+  let msg = {
+    from: currentUser,
+    text: msgText.value
+  };
+
+  if (!users[currentUser].messages[openChatUser])
+    users[currentUser].messages[openChatUser] = [];
+
+  if (!users[openChatUser].messages[currentUser])
+    users[openChatUser].messages[currentUser] = [];
+
+  users[currentUser].messages[openChatUser].push(msg);
+  users[openChatUser].messages[currentUser].push(msg);
+
+  saveUsers(users);
+  msgText.value = "";
+  loadChat();
 }
 </script>
 
