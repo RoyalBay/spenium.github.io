@@ -20,6 +20,17 @@ body {
   padding: 12px 18px;
   font-weight: bold;
   font-size: 22px;
+
+  /* makes logo behave nicely */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* WUPHF logo button */
+.logo {
+  cursor: pointer;
+  user-select: none;
 }
 
 .container {
@@ -31,7 +42,7 @@ body {
   align-items: flex-start;
 }
 
-/* ❌ BORDERS REMOVED */
+/* no borders */
 .card {
   background: white;
   padding: 15px;
@@ -42,7 +53,6 @@ body {
   border: none;
 }
 
-/* ❌ BORDERS REMOVED */
 #profile {
   width: 260px;
   border: none;
@@ -57,7 +67,7 @@ body {
   min-width: 0;
 }
 
-input, button, textarea, select {
+input, button, textarea {
   width: 100%;
   padding: 10px;
   margin-top: 5px;
@@ -122,7 +132,10 @@ textarea {
 
 <body>
 
-<div class="topbar">WUPHF</div>
+<!-- TOP BAR (LOGO BUTTON ADDED) -->
+<div class="topbar">
+  <div class="logo" onclick="goHome()">WUPHF</div>
+</div>
 
 <!-- LOGIN -->
 <div id="loginBox" class="card" style="max-width:400px;margin:80px auto;">
@@ -155,18 +168,9 @@ textarea {
 
     <div style="position:relative; width:90px; height:90px;">
       <img id="profilePic" class="profile-pic" />
-      <img id="profileFrame"
-           style="position:absolute; top:0; left:0; width:90px; height:90px; pointer-events:none;">
     </div>
 
     <input type="file" id="profileUpload" />
-
-    <select id="frameSelect">
-      <option value="frame-none">None</option>
-      <option value="frame-gold">Gold</option>
-      <option value="frame-silver">Silver</option>
-      <option value="frame-pink">Pink</option>
-    </select>
 
     <button onclick="updateProfile()">Update</button>
 
@@ -187,6 +191,14 @@ function saveUsers(u) {
   localStorage.setItem("users", JSON.stringify(u));
 }
 
+/* HOME BUTTON */
+function goHome() {
+  if (!currentUser) return;
+  loadFeed();
+  feed.style.display = "block";
+  profile.style.display = "block";
+}
+
 /* LOGIN */
 function login() {
   let users = getUsers();
@@ -197,7 +209,6 @@ function login() {
     users[u] = {
       password: p,
       pic: "",
-      frame: "frame-none",
       posts: [],
       followers: [],
       following: []
@@ -230,12 +241,7 @@ function openProfile(user) {
   feed.style.display = "none";
   profile.style.display = "block";
 
-  let verified = (u.followers?.length || 0) >= 5;
-
-  profileName.innerHTML =
-    "@" + user +
-    (verified ? ' <img src="verified.png" width="14">' : '');
-
+  profileName.innerHTML = "@" + user;
   profilePic.src = u.pic || "";
   profileFollowers.innerText = "Followers: " + (u.followers?.length || 0);
 }
@@ -254,18 +260,13 @@ function loadFeed() {
   posts.sort((a, b) => b.id - a.id);
 
   posts.forEach(p => {
-    let verified = (users[p.user]?.followers?.length || 0) >= 5;
-
     let div = document.createElement("div");
 
     div.innerHTML = `
       <div class="post-header">
-        <div>
-          <span class="user" onclick="openProfile('${p.user}')" style="cursor:pointer;">
-            @${p.user}
-            ${verified ? '<img src="verified.png" width="14">' : ''}
-          </span>
-        </div>
+        <span class="user" onclick="openProfile('${p.user}')" style="cursor:pointer;">
+          @${p.user}
+        </span>
       </div>
 
       <div>${p.text}</div>
@@ -293,12 +294,7 @@ function loadProfile() {
   let users = getUsers();
   let u = users[currentUser];
 
-  let verified = (u.followers?.length || 0) >= 5;
-
-  profileName.innerHTML =
-    "@" + currentUser +
-    (verified ? ' <img src="verified.png" width="14">' : '');
-
+  profileName.innerHTML = "@" + currentUser;
   profilePic.src = u.pic || "";
   profileFollowers.innerText = "Followers: " + (u.followers?.length || 0);
 }
@@ -373,10 +369,6 @@ function updateProfile() {
     };
     r.readAsDataURL(file);
   }
-
-  users[currentUser].frame = frameSelect.value;
-  saveUsers(users);
-  loadProfile();
 }
 </script>
 
