@@ -101,19 +101,6 @@ textarea {
   border-radius: 6px;
   display: block;
 }
-
-/* DEV PANEL (hidden by default) */
-#devPanel {
-  display: none;
-  position: fixed;
-  right: 10px;
-  bottom: 10px;
-  background: black;
-  color: white;
-  padding: 10px;
-  width: 220px;
-  font-size: 12px;
-}
 </style>
 </head>
 
@@ -150,7 +137,12 @@ textarea {
   <div id="profile" class="card" style="display:none;">
     <h3>Profile</h3>
 
-    <img id="profilePic" class="profile-pic" />
+    <!-- PROFILE IMAGE + FRAME -->
+    <div style="position:relative; width:90px; height:90px;">
+      <img id="profilePic" class="profile-pic" />
+      <img id="profileFrame"
+           style="position:absolute; top:0; left:0; width:90px; height:90px; pointer-events:none;">
+    </div>
 
     <input type="file" id="profileUpload" />
 
@@ -167,13 +159,6 @@ textarea {
     <p id="profileFollowers"></p>
   </div>
 
-</div>
-
-<!-- DEV TOOLS -->
-<div id="devPanel">
-  <b>DEV TOOLS</b><br><br>
-  <input id="devUser" placeholder="User" />
-  <button onclick="addFollowerDev()">+ Followers</button>
 </div>
 
 <script>
@@ -212,10 +197,6 @@ function login() {
 
   loginBox.style.display = "none";
   app.style.display = "block";
-
-  if (currentUser === "wuphf") {
-    devPanel.style.display = "block";
-  }
 
   loadProfile();
   loadFeed();
@@ -287,30 +268,6 @@ function deletePost(id) {
   loadFeed();
 }
 
-/* FOLLOW */
-function toggleFollow(user) {
-  let users = getUsers();
-  if (!users[user] || user === currentUser) return;
-
-  let me = users[currentUser];
-  let them = users[user];
-
-  me.following ||= [];
-  them.followers ||= [];
-
-  if (!me.following.includes(user)) {
-    me.following.push(user);
-    them.followers.push(currentUser);
-  } else {
-    me.following = me.following.filter(f => f !== user);
-    them.followers = them.followers.filter(f => f !== currentUser);
-  }
-
-  saveUsers(users);
-  loadProfile();
-  loadFeed();
-}
-
 /* VERIFIED */
 function isVerified(user) {
   let users = getUsers();
@@ -353,7 +310,7 @@ function loadFeed() {
 
       <div>
         <span class="like-btn" onclick="likePost(${p.id})">
-          👍 ${p.likes?.length || 0} ${liked ? "(you)" : ""}
+          👍 ${p.likes?.length || 0}
         </span>
 
         <span class="delete-btn" onclick="deletePost(${p.id})">
@@ -377,6 +334,19 @@ function loadProfile() {
   profileName.innerText = "@" + currentUser;
   profilePic.src = u.pic || "";
   profileFollowers.innerText = "Followers: " + (u.followers?.length || 0);
+
+  // FRAME LOGIC
+  let frame = u.frame;
+
+  if (frame === "frame-gold") {
+    profileFrame.src = "gold.png";
+  } else if (frame === "frame-silver") {
+    profileFrame.src = "silver.png";
+  } else if (frame === "frame-pink") {
+    profileFrame.src = "pink.png";
+  } else {
+    profileFrame.src = "";
+  }
 }
 
 /* UPDATE PROFILE */
@@ -398,28 +368,6 @@ function updateProfile() {
   saveUsers(users);
   loadProfile();
 }
-
-/* DEV TOOL */
-function addFollowerDev() {
-  let users = getUsers();
-  let u = devUser.value;
-
-  if (!users[u]) return;
-
-  users[u].followers.push("dev");
-  saveUsers(users);
-
-  loadProfile();
-  loadFeed();
-}
-
-/* KEYBIND */
-document.addEventListener("keydown", e => {
-  if (currentUser === "wuphf" && e.ctrlKey && e.shiftKey && e.key === "D") {
-    devPanel.style.display =
-      devPanel.style.display === "block" ? "none" : "block";
-  }
-});
 </script>
 
 </body>
