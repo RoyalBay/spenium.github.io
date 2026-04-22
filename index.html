@@ -6,10 +6,24 @@
 <title>WUPHF</title>
 
 <style>
-body {
+body.light {
   margin:0;
   font-family:Tahoma;
   background:linear-gradient(#dfe7f3,#f5f6f7);
+}
+
+body.dark {
+  margin:0;
+  font-family:Tahoma;
+  background:#1c1c1c;
+  color:white;
+}
+
+body.cool {
+  margin:0;
+  font-family:Tahoma;
+  background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+  color:white;
 }
 
 .topbar {
@@ -18,19 +32,18 @@ body {
   padding:12px 18px;
   font-size:22px;
   font-weight:bold;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
   cursor:pointer;
-  position:relative;
 }
 
 #logoutBtn {
-  position:absolute;
-  right:10px;
-  top:8px;
   width:auto;
   padding:5px 10px;
   background:#2d4373;
-  color:white;
   border:none;
+  color:white;
   cursor:pointer;
 }
 
@@ -59,25 +72,37 @@ body {
   margin-bottom:10px;
 }
 
+body.dark .card,
+body.cool .card {
+  background:#2a2a2a;
+}
+
 input, textarea {
   width:100%;
   padding:8px;
   margin:6px 0;
   border:1px solid #ccc;
   border-radius:3px;
-  box-sizing:border-box;
 }
 
-textarea { height:70px; resize:none; }
-
 button {
-  width:100%;
-  padding:8px;
+  padding:6px;
   background:#3b5998;
   color:white;
   border:none;
   cursor:pointer;
-  margin-top:5px;
+}
+
+.post {
+  border-top:1px solid #ddd;
+  padding:10px 0;
+  position:relative;
+}
+
+.user-row {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
 }
 
 .user {
@@ -86,10 +111,15 @@ button {
   cursor:pointer;
 }
 
-.post {
-  border-top:1px solid #eee;
-  padding:10px 0;
-  position:relative;
+.follow-btn {
+  width:auto;
+  font-size:11px;
+}
+
+.like-btn {
+  width:auto;
+  font-size:11px;
+  margin-top:5px;
 }
 
 .delete {
@@ -101,30 +131,21 @@ button {
   cursor:pointer;
 }
 
-.follow-post {
-  position:absolute;
-  right:5px;
-  top:5px;
-  width:auto;
-  font-size:11px;
-  padding:3px 6px;
-}
-
 .profile-pic {
   width:90px;
   height:90px;
-  object-fit:cover;
   border-radius:6px;
+  object-fit:cover;
 }
 
 .verified {
-  width:14px;
-  vertical-align:middle;
+  font-weight:bold;
+  color:#f5c542;
 }
 </style>
 </head>
 
-<body>
+<body class="light">
 
 <div class="topbar" onclick="goHome()">
   WUPHF
@@ -142,8 +163,8 @@ button {
 <!-- LOGIN -->
 <div id="login" class="screen center card">
   <h3>Login</h3>
-  <input id="loginUser" placeholder="Username">
-  <input id="loginPass" type="password" placeholder="Password">
+  <input id="loginUser">
+  <input id="loginPass" type="password">
   <div id="loginError" style="color:red;font-size:12px;"></div>
   <button onclick="login()">Enter</button>
 </div>
@@ -151,59 +172,75 @@ button {
 <!-- SIGNUP -->
 <div id="signup" class="screen center card">
   <h3>Create Account</h3>
-  <input id="signupUser" placeholder="Username">
+  <input id="signupUser">
   <input id="signupPass" type="password">
-  <div id="signupError" style="color:red;font-size:12px;"></div>
+  <div id="signupError"></div>
   <button onclick="createAccount()">Create</button>
 </div>
 
 <!-- APP -->
 <div id="app" class="screen">
-  <div class="container">
+<div class="container">
 
-    <div class="sidebar card">
-      <button onclick="showTab('feed')">Feed</button>
-      <button onclick="showTab('messages')">Messages</button>
+  <div class="sidebar card">
+    <button onclick="showTab('feed')">Feed</button>
+    <button onclick="showTab('messages')">Messages</button>
+    <button onclick="toggleSettings()">Settings</button>
+    <div id="settings" style="display:none;">
+      <button onclick="setTheme('light')">Light</button>
+      <button onclick="setTheme('dark')">Dark</button>
+      <button onclick="setTheme('cool')">Cool</button>
     </div>
-
-    <!-- FEED -->
-    <div id="feed" class="feed card">
-      <h3>Feed</h3>
-      <textarea id="postText"></textarea>
-      <button onclick="addPost()">Post</button>
-      <div id="posts"></div>
-    </div>
-
-    <!-- MESSAGES -->
-    <div id="messages" class="feed card" style="display:none;">
-      <h3>Messages</h3>
-      <input id="msgUser">
-      <textarea id="msgText"></textarea>
-      <button onclick="sendMessage()">Send</button>
-      <div id="messageList"></div>
-      <div id="chatBox"></div>
-    </div>
-
-    <!-- PROFILE -->
-    <div id="profile" class="profile card">
-      <h3>Profile</h3>
-
-      <input type="file" onchange="updatePic(event)">
-      <button onclick="refreshProfile()">Update Profile</button>
-
-      <div id="followArea"></div>
-
-      <p id="profileName"></p>
-      <p id="profileFollowers"></p>
-    </div>
-
   </div>
+
+  <div id="feed" class="feed card">
+    <h3>Feed</h3>
+    <textarea id="postText"></textarea>
+    <button onclick="addPost()">Post</button>
+    <div id="posts"></div>
+  </div>
+
+  <div id="messages" class="feed card" style="display:none;">
+    <h3>Messages</h3>
+    <input id="msgUser">
+    <textarea id="msgText"></textarea>
+    <button onclick="sendMessage()">Send</button>
+    <div id="messageList"></div>
+    <div id="chatBox"></div>
+  </div>
+
+  <div id="profile" class="profile card">
+    <h3>Profile</h3>
+
+    <img id="profilePic" class="profile-pic" src="empty.jpg">
+    <input type="file" onchange="updatePic(event)">
+    <button onclick="refreshProfile()">Update Profile</button>
+
+    <p id="profileName"></p>
+    <p id="profileFollowers"></p>
+
+    <div id="followArea"></div>
+  </div>
+
+</div>
 </div>
 
 <script>
 
 let currentUser=null;
 let viewingUser=null;
+
+/* THEME */
+function setTheme(t){
+  document.body.className=t;
+  localStorage.setItem("theme",t);
+}
+
+/* SETTINGS */
+function toggleSettings(){
+  let s=document.getElementById("settings");
+  s.style.display=s.style.display==="block"?"none":"block";
+}
 
 /* NAV */
 function showScreen(id){
@@ -212,31 +249,25 @@ function showScreen(id){
 }
 
 function showTab(tab){
-  document.getElementById("feed").style.display="none";
-  document.getElementById("messages").style.display="none";
+  feed.style.display="none";
+  messages.style.display="none";
   document.getElementById(tab).style.display="block";
-
   if(tab==="feed") loadFeed();
   if(tab==="messages") loadInbox();
-
   loadProfile();
 }
 
-/* HOME FIX */
 function goHome(){
   if(currentUser){
     viewingUser=null;
     showScreen("app");
     showTab("feed");
-  } else {
-    showScreen("welcome");
-  }
+  } else showScreen("welcome");
 }
 
 /* STORAGE */
 function getUsers(){
   let u=JSON.parse(localStorage.getItem("users")||"{}");
-
   Object.keys(u).forEach(k=>{
     u[k].posts ||= [];
     u[k].followers ||= [];
@@ -245,31 +276,20 @@ function getUsers(){
     u[k].pic ||= "empty.jpg";
     u[k].verified ||= false;
   });
-
   return u;
 }
+function saveUsers(u){ localStorage.setItem("users",JSON.stringify(u)); }
 
-function saveUsers(u){
-  localStorage.setItem("users",JSON.stringify(u));
-}
-
-/* LOGIN FIXED */
+/* LOGIN */
 function login(){
-  let users=getUsers();
-  let u=loginUser.value.trim();
+  let u=loginUser.value;
   let p=loginPass.value;
+  let users=getUsers();
 
   loginError.innerText="";
 
-  if(!users[u]){
-    loginError.innerText="Incorrect username";
-    return;
-  }
-
-  if(users[u].password !== p){
-    loginError.innerText="Incorrect password";
-    return;
-  }
+  if(!users[u]) return loginError.innerText="Wrong username";
+  if(users[u].password!==p) return loginError.innerText="Wrong password";
 
   currentUser=u;
   showScreen("app");
@@ -278,33 +298,30 @@ function login(){
 
 /* SIGNUP */
 function createAccount(){
-  let users=getUsers();
-  let u=signupUser.value.trim();
+  let u=signupUser.value;
   let p=signupPass.value;
+  let users=getUsers();
 
-  if(users[u]) return signupError.innerText="Username exists";
+  if(users[u]) return signupError.innerText="Exists";
 
   users[u]={password:p,posts:[],followers:[],following:[],messages:{},pic:"empty.jpg",verified:false};
-
   saveUsers(users);
-  signupError.innerText="Account created.";
 }
 
 /* POSTS */
 function addPost(){
   let users=getUsers();
-  let text=postText.value.trim();
+  let text=postText.value;
   if(!text) return;
 
   users[currentUser].posts.unshift({
     id:Date.now(),
     user:currentUser,
     text,
-    time:new Date().toLocaleString()
+    likes:0
   });
 
   saveUsers(users);
-  postText.value="";
   loadFeed();
 }
 
@@ -318,72 +335,52 @@ function loadFeed(){
   all.sort((a,b)=>b.id-a.id);
 
   all.forEach(p=>{
-    let verified = users[p.user].verified
-      ? `<img src="verify.png" class="verified">`
-      : "";
+
+    let verified = users[p.user].verified ? `<span class="verified">◆</span>` : "";
 
     let isFollowing = users[currentUser].following.includes(p.user);
-
-    let followBtn="";
-    if(p.user !== currentUser){
-      followBtn=`
-        <button class="follow-post" onclick="toggleFollow('${p.user}')">
-          ${isFollowing ? "Unfollow" : "Follow"}
-        </button>
-      `;
-    }
 
     let div=document.createElement("div");
     div.className="post";
 
     div.innerHTML=`
-      ${followBtn}
+      <div class="user-row">
+        <div class="user" onclick="openProfile('${p.user}')">
+          @${p.user} ${verified}
+        </div>
 
-      <div class="user" onclick="openProfile('${p.user}')">
-        @${p.user} ${verified}
+        <div>
+          <button class="follow-btn" onclick="toggleFollow('${p.user}')">
+            ${isFollowing?"Unfollow":"Follow"}
+          </button>
+        </div>
       </div>
 
       <div>${p.text}</div>
-      <div style="font-size:11px;color:#777;">${p.time}</div>
 
-      ${p.user===currentUser?
-        `<div class="delete" onclick="deletePost(${p.id})">delete</div>`:""}
+      <button class="like-btn" onclick="likePost(${p.id})">
+        ▲ ${p.likes}
+      </button>
+
+      ${p.user===currentUser?`<div class="delete" onclick="deletePost(${p.id})">x</div>`:""}
     `;
 
     posts.appendChild(div);
   });
 }
 
-/* DELETE */
-function deletePost(id){
+/* LIKE */
+function likePost(id){
   let users=getUsers();
-  users[currentUser].posts=users[currentUser].posts.filter(p=>p.id!==id);
+
+  Object.values(users).forEach(u=>{
+    u.posts.forEach(p=>{
+      if(p.id===id) p.likes++;
+    });
+  });
+
   saveUsers(users);
   loadFeed();
-}
-
-/* PROFILE */
-function loadProfile(){
-  let users=getUsers();
-  let user=viewingUser||currentUser;
-  let u=users[user];
-
-  if(!u) return;
-
-  profileName.innerHTML=`<b>@${user}</b> ${u.verified ? '<img src="verify.png" class="verified">' : ''}`;
-  profileFollowers.innerText="Followers: "+u.followers.length;
-
-  followArea.innerHTML="";
-
-  if(user!==currentUser){
-    let isFollowing=users[currentUser].following.includes(user);
-
-    let btn=document.createElement("button");
-    btn.innerText=isFollowing?"Unfollow":"Follow";
-    btn.onclick=()=>toggleFollow(user);
-
-    followArea.appendChild(btn);
-  }
 }
 
 /* FOLLOW */
@@ -401,40 +398,51 @@ function toggleFollow(user){
     them.followers.push(currentUser);
   }
 
-  users[user].verified = users[user].followers.length >= 100;
+  them.verified = them.followers.length>=100;
 
   saveUsers(users);
-  loadProfile();
   loadFeed();
+  loadProfile();
 }
 
-/* OTHER FUNCTIONS (UNCHANGED CORE) */
+/* PROFILE */
+function loadProfile(){
+  let users=getUsers();
+  let u=users[viewingUser||currentUser];
+
+  if(!u) return;
+
+  profilePic.src=u.pic;
+
+  profileName.innerHTML=`@${viewingUser||currentUser} ${u.verified?"◆":""}`;
+  profileFollowers.innerText="Followers: "+u.followers.length;
+
+  followArea.innerHTML="";
+}
+
+/* PROFILE PIC */
 function updatePic(e){
   let file=e.target.files[0];
-  if(!file) return;
-
   let r=new FileReader();
+
   r.onload=()=>{
     let users=getUsers();
     users[currentUser].pic=r.result;
     saveUsers(users);
     loadProfile();
   };
+
   r.readAsDataURL(file);
 }
 
+/* OTHER */
 function refreshProfile(){ loadProfile(); }
+function openProfile(u){ viewingUser=u; loadProfile(); }
+function logout(){ currentUser=null; showScreen("welcome"); }
 
-function openProfile(u){
-  viewingUser=u;
-  loadProfile();
-}
-
-function logout(){
-  currentUser=null;
-  viewingUser=null;
-  showScreen("welcome");
-}
+(function(){
+  document.body.className=localStorage.getItem("theme")||"light";
+})();
 
 </script>
 
