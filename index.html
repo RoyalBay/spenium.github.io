@@ -1,42 +1,37 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>WUPHF</title>
 
 <style>
-body{
+body {
   margin:0;
   font-family:Tahoma;
   background:linear-gradient(#dfe7f3,#f5f6f7);
 }
 
-/* TOP BAR */
-.topbar{
+.topbar {
   background:#3b5998;
   color:white;
   padding:12px;
   font-weight:bold;
 }
 
-/* CARD */
-.card{
+.card {
   max-width:420px;
   margin:80px auto;
   background:white;
   padding:15px;
 }
 
-/* INPUTS */
-input{
+input {
   width:100%;
   padding:10px;
   margin:5px 0;
-  box-sizing:border-box;
 }
 
-/* BUTTONS */
-button{
+button {
   width:100%;
   padding:10px;
   background:#3b5998;
@@ -46,8 +41,8 @@ button{
   cursor:pointer;
 }
 
-/* HIDDEN SCREEN */
-.hidden{display:none;}
+.hidden { display:none; }
+.error { color:red; font-size:12px; }
 </style>
 </head>
 
@@ -55,34 +50,42 @@ button{
 
 <div class="topbar">WUPHF</div>
 
-<!-- LOGIN SCREEN -->
 <div id="login" class="card">
   <h3>Login</h3>
-
-  <input id="l_user" placeholder="username">
-  <input id="l_pass" type="password" placeholder="password">
+  <input id="l_user" placeholder="Username">
+  <input id="l_pass" type="password" placeholder="Password">
 
   <button onclick="login()">Login</button>
   <button onclick="showSignup()">Create Account</button>
 
-  <p id="err" style="color:red;"></p>
+  <div id="err" class="error"></div>
 </div>
 
-<!-- SIGNUP SCREEN -->
 <div id="signup" class="card hidden">
   <h3>Create Account</h3>
 
-  <input id="s_user" placeholder="username">
-  <input id="s_pass" type="password" placeholder="password">
+  <input id="s_user" placeholder="Username">
+  <input id="s_pass" type="password" placeholder="Password">
 
   <button onclick="signup()">Create</button>
-  <button onclick="back()">Back</button>
+  <button onclick="showLogin()">Back</button>
 
-  <p id="err2" style="color:red;"></p>
+  <div id="err2" class="error"></div>
 </div>
 
 <script>
 
+/* THEME */
+function applyTheme(){
+  let t = localStorage.getItem("theme") || "light";
+
+  if(t==="dark") document.body.style.background="#1e1e1e";
+  else if(t==="dynamic") document.body.style.background="linear-gradient(#3b5998,#8b9dc3)";
+  else document.body.style.background="linear-gradient(#dfe7f3,#f5f6f7)";
+}
+applyTheme();
+
+/* STORAGE */
 function getUsers(){
   return JSON.parse(localStorage.getItem("users")||"{}");
 }
@@ -90,10 +93,19 @@ function saveUsers(u){
   localStorage.setItem("users",JSON.stringify(u));
 }
 
-/* LOGIN FIX */
+/* NAV */
+function showSignup(){
+  login.classList.add("hidden");
+  signup.classList.remove("hidden");
+}
+function showLogin(){
+  signup.classList.add("hidden");
+  login.classList.remove("hidden");
+}
+
+/* LOGIN */
 function login(){
   let u=getUsers();
-
   let name=l_user.value.trim();
   let pass=l_pass.value;
 
@@ -103,51 +115,30 @@ function login(){
   }
 
   if(u[name].password!==pass){
-    err.innerText="Wrong password";
+    err.innerText="Incorrect password";
     return;
   }
 
   localStorage.setItem("currentUser",name);
-  window.location.href="feed.html";
+  location="feed.html";
 }
 
-/* SWITCH SCREEN */
-function showSignup(){
-  login.classList.add("hidden");
-  signup.classList.remove("hidden");
-}
-
-function back(){
-  signup.classList.add("hidden");
-  login.classList.remove("hidden");
-}
-
-/* CREATE ACCOUNT */
+/* SIGNUP */
 function signup(){
   let u=getUsers();
 
   let name=s_user.value.trim();
   let pass=s_pass.value;
 
-  if(!name||!pass){
-    err2.innerText="fill all fields";
-    return;
-  }
-
   if(u[name]){
-    err2.innerText="username exists";
+    err2.innerText="Username already in use";
     return;
   }
 
-  u[name]={
-    password:pass,
-    posts:[],
-    followers:[],
-    pic:""
-  };
+  u[name]={ password:pass, posts:[], followers:[], pic:"" };
 
   saveUsers(u);
-  back();
+  showLogin();
 }
 
 </script>
