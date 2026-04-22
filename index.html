@@ -8,9 +8,25 @@
 <style>
 
 /* THEMES */
-body.light { margin:0; font-family:Tahoma; background:linear-gradient(#dfe7f3,#f5f6f7); }
-body.dark { margin:0; font-family:Tahoma; background:#1c1c1c; color:white; }
-body.dynamic { margin:0; font-family:Tahoma; background:linear-gradient(135deg,#141e30,#243b55); color:white; }
+body.light {
+  margin:0;
+  font-family:Tahoma;
+  background:linear-gradient(#dfe7f3,#f5f6f7);
+}
+
+body.dark {
+  margin:0;
+  font-family:Tahoma;
+  background:#1c1c1c;
+  color:white;
+}
+
+body.dynamic {
+  margin:0;
+  font-family:Tahoma;
+  background:linear-gradient(135deg,#141e30,#243b55);
+  color:white;
+}
 
 /* TOP BAR */
 .topbar {
@@ -37,16 +53,20 @@ body.dynamic { margin:0; font-family:Tahoma; background:linear-gradient(135deg,#
 
 .container {
   display:flex;
-  gap:10px;
   max-width:1400px;
   margin:20px auto;
+  gap:10px;
 }
 
-/* FEED WIDE */
-.feed { flex:1; }
+/* FEED */
+.feed {
+  flex:1;
+}
 
-/* PROFILE RIGHT */
-.profile { width:260px; }
+/* PROFILE */
+.profile {
+  width:260px;
+}
 
 /* CARD */
 .card {
@@ -56,15 +76,15 @@ body.dynamic { margin:0; font-family:Tahoma; background:linear-gradient(135deg,#
 }
 
 body.dark .card,
-body.dynamic .card { background:#2a2a2a; }
+body.dynamic .card {
+  background:#2a2a2a;
+}
 
-/* INPUT */
+/* INPUTS */
 input, textarea {
   width:100%;
   padding:8px;
   margin:6px 0;
-  border-radius:3px;
-  border:1px solid #ccc;
   box-sizing:border-box;
   resize:none;
 }
@@ -78,26 +98,31 @@ input, textarea {
 
 .user-row {
   display:flex;
-  justify-content:space-between;
+  justify-content:flex-start;
   align-items:center;
+  gap:10px;
 }
 
 .user {
-  font-weight:bold;
+  font-weight:bold; /* FIXED AGAIN */
   color:#3b5998;
   cursor:pointer;
 }
 
-.follow-btn {
+/* BLUE BUTTONS RESTORED */
+button {
+  background:#3b5998;
+  color:white;
+  border:none;
+  padding:6px 10px;
+  cursor:pointer;
   width:auto;
-  font-size:11px;
-  padding:3px 6px;
 }
 
 /* LIKE */
-button.like {
-  width:auto;
+.like-btn {
   margin-top:6px;
+  width:auto;
 }
 
 /* DELETE */
@@ -105,8 +130,8 @@ button.like {
   position:absolute;
   bottom:5px;
   right:5px;
-  font-size:11px;
   color:red;
+  font-size:11px;
   cursor:pointer;
 }
 
@@ -118,40 +143,18 @@ button.like {
   object-fit:cover;
 }
 
-.verified { color:#f5c542; font-weight:bold; }
-
-/* LOGIN */
-.login-title {
-  font-size:18px;
+.verified {
+  color:#f5c542;
   font-weight:bold;
-  margin-bottom:10px;
 }
 
-/* MESSAGES MODERN */
-#messages {
-  display:flex;
-  max-width:1200px;
-  margin:20px auto;
-  gap:10px;
-}
-
-.chat-list {
-  width:220px;
+/* LOGIN SCREEN */
+.login-box {
+  max-width:400px;
+  margin:80px auto;
   background:white;
-  padding:10px;
-}
-
-.chat-window {
-  flex:1;
-  background:white;
-  padding:10px;
-}
-
-body.dark .chat-list,
-body.dark .chat-window,
-body.dynamic .chat-list,
-body.dynamic .chat-window {
-  background:#2a2a2a;
+  padding:15px;
+  border-radius:4px;
 }
 
 </style>
@@ -159,31 +162,38 @@ body.dynamic .chat-window {
 
 <body class="light">
 
-<!-- TOP BAR (ALWAYS ACTIVE) -->
+<!-- TOP BAR (FIXED NAV ALWAYS WORKS) -->
 <div class="topbar">
   <div onclick="goHome()" style="cursor:pointer;">WUPHF</div>
 
   <div class="nav">
-    <button onclick="show('feed')">Feed</button>
-    <button onclick="show('messages')">Messages</button>
+    <button onclick="showFeed()">Feed</button>
+    <button onclick="showMessages()">Messages</button>
     <button onclick="openSettings()">Settings</button>
     <button onclick="logout()">Logout</button>
   </div>
 </div>
 
 <!-- LOGIN -->
-<div id="login" class="screen card" style="display:block; max-width:400px; margin:80px auto;">
-  <div class="login-title">log in to account</div>
+<div id="loginScreen" class="login-box screen" style="display:block;">
+  <h2>just WUPHF it.</h2>
   <p>whenever. wherever.</p>
-  <input id="loginUser">
-  <input id="loginPass" type="password">
-  <div id="loginError" style="color:red"></div>
+
+  <h3>Create Account / Login</h3>
+
+  <input id="user">
+  <input id="pass" type="password">
+
   <button onclick="login()">Login</button>
+  <button onclick="createAccount()">Create Account</button>
+
+  <div id="loginError" style="color:red;"></div>
 </div>
 
 <!-- SETTINGS -->
-<div id="settings" class="screen card" style="max-width:600px; margin:40px auto;">
+<div id="settingsScreen" class="screen card" style="max-width:500px; margin:40px auto;">
   <h2>Settings</h2>
+
   <h3>Themes</h3>
   <button onclick="setTheme('light')">Light</button>
   <button onclick="setTheme('dark')">Dark</button>
@@ -198,77 +208,91 @@ body.dynamic .chat-window {
   <!-- FEED -->
   <div id="feed" class="feed card">
     <h3>Feed</h3>
+
     <textarea id="postText"></textarea>
     <button onclick="addPost()">Post</button>
+
     <div id="posts"></div>
   </div>
 
   <!-- PROFILE -->
   <div class="profile card">
     <h3>Profile</h3>
+
     <img id="profilePic" class="profile-pic">
     <input type="file" onchange="updatePic(event)">
+    <button onclick="refreshProfile()">Update Profile</button>
+
     <p id="profileName"></p>
     <p id="profileFollowers"></p>
   </div>
 
 </div>
 
+<!-- MESSAGES -->
+<div id="messages" class="screen card" style="max-width:900px; margin:20px auto;">
+  <h3>Messages</h3>
+
+  <input id="msgTo" placeholder="user">
+  <textarea id="msgText"></textarea>
+  <button onclick="sendMessage()">Send</button>
+
+  <div id="msgList"></div>
+  <div id="chat"></div>
 </div>
 
-<!-- MESSAGES (MODERN LAYOUT) -->
-<div id="messages" style="display:none;">
-  <div class="chat-list" id="chatList"></div>
-  <div class="chat-window">
-    <div id="chatBox"></div>
-    <input id="msgText">
-    <button onclick="sendMessage()">Send</button>
-  </div>
 </div>
 
 <script>
 
 let currentUser=null;
 let viewingUser=null;
-let activeChat=null;
-let liked={};
+let likedMap={};
 
-/* NAV SAFE */
-function show(tab){
-  document.getElementById("feed").style.display="none";
+/* NAV FIXED */
+function showFeed(){
+  if(!currentUser) return;
+  document.getElementById("settingsScreen").style.display="none";
   document.getElementById("messages").style.display="none";
-
-  if(tab==="feed"){
-    document.getElementById("app").style.display="block";
-    document.getElementById("feed").style.display="block";
-    loadFeed();
-  }
-
-  if(tab==="messages"){
-    document.getElementById("app").style.display="none";
-    document.getElementById("messages").style.display="flex";
-    loadChats();
-  }
-
-  loadProfile();
+  document.getElementById("app").style.display="block";
+  document.getElementById("feed").style.display="block";
+  loadFeed();
 }
 
-/* HOME FIX */
+function showMessages(){
+  if(!currentUser) return;
+  document.getElementById("app").style.display="none";
+  document.getElementById("messages").style.display="block";
+}
+
+/* HOME ALWAYS WORKS */
 function goHome(){
-  show("feed");
+  showFeed();
 }
 
-/* THEME */
+/* SETTINGS */
+function openSettings(){
+  document.getElementById("app").style.display="none";
+  document.getElementById("settingsScreen").style.display="block";
+}
+
 function setTheme(t){
   document.body.className=t;
 }
 
 /* LOGIN */
 function login(){
-  currentUser=loginUser.value;
-  document.getElementById("login").style.display="none";
+  currentUser=user.value;
+  document.getElementById("loginScreen").style.display="none";
   document.getElementById("app").style.display="block";
-  show("feed");
+  showFeed();
+}
+
+/* CREATE */
+function createAccount(){
+  currentUser=user.value;
+  document.getElementById("loginScreen").style.display="none";
+  document.getElementById("app").style.display="block";
 }
 
 /* POSTS */
@@ -302,13 +326,13 @@ function loadFeed(){
     div.innerHTML=`
       <div class="user-row">
         <div class="user">@${p.user}</div>
-        <button onclick="toggleFollow('${p.user}')">Follow</button>
+        <button>Follow</button>
       </div>
 
       <div>${p.text}</div>
       <div style="font-size:11px">${p.time}</div>
 
-      <button class="like" onclick="like(${p.id})">▲ ${p.likes}</button>
+      <button class="like-btn" onclick="like(${p.id})">▲ ${p.likes}</button>
 
       ${p.user===currentUser?`<div class="delete" onclick="del(${p.id})">delete</div>`:""}
     `;
@@ -319,10 +343,10 @@ function loadFeed(){
 
 /* LIKE FIX */
 function like(id){
-  if(!liked[currentUser]) liked[currentUser]={};
-  if(liked[currentUser][id]) return;
+  if(!likedMap[currentUser]) likedMap[currentUser]={};
+  if(likedMap[currentUser][id]) return;
 
-  liked[currentUser][id]=true;
+  likedMap[currentUser][id]=true;
 
   let users=getUsers();
   Object.values(users).forEach(u=>{
@@ -335,7 +359,7 @@ function like(id){
   loadFeed();
 }
 
-/* DELETE */
+/* DELETE FIX */
 function del(id){
   let users=getUsers();
   users[currentUser].posts=users[currentUser].posts.filter(p=>p.id!==id);
@@ -343,18 +367,12 @@ function del(id){
   loadFeed();
 }
 
-/* MESSAGES FIXED */
-function loadChats(){
-  chatList.innerHTML="";
-  chatBox.innerHTML="";
-}
-
 /* PROFILE */
 function loadProfile(){
   let users=getUsers();
   let u=users[currentUser];
 
-  profileName.innerHTML=`@${currentUser}`;
+  profileName.innerHTML=`<b>@${currentUser}</b>`;
   profileFollowers.innerText="Followers: "+u.followers.length;
 }
 
