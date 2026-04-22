@@ -77,6 +77,7 @@ button {
 .post {
   border-top:1px solid #eee;
   padding:10px 0;
+  position:relative;
 }
 
 .follow-btn {
@@ -88,6 +89,15 @@ button {
 .upvote {
   cursor:pointer;
   font-size:12px;
+}
+
+.delete {
+  position:absolute;
+  bottom:5px;
+  right:5px;
+  font-size:11px;
+  color:red;
+  cursor:pointer;
 }
 
 .profile-pic {
@@ -110,7 +120,7 @@ button {
 
 <!-- WELCOME -->
 <div id="welcome" class="screen center card" style="display:block;">
-  <h2>JUST WUPHF IT.</h2>
+  <h2>just WUPHF it.</h2>
   <p style="font-size:12px;color:#555;">whenever. whenever.</p>
   <button onclick="showScreen('login')">Login</button>
   <button onclick="showScreen('signup')">Create Account</button>
@@ -193,7 +203,7 @@ function goHome(){
   }
 }
 
-/* STORAGE SAFE */
+/* STORAGE */
 function getUsers(){
   let u=JSON.parse(localStorage.getItem("users")||"{}");
 
@@ -250,13 +260,17 @@ function logout(){
   location.reload();
 }
 
-/* VERIFIED */
-function isVerified(user){
-  let users=getUsers();
-  return (users[user]?.followers.length||0)>=100;
+/* TAB FIX (THIS FIXES MESSAGES BUTTON) */
+function showTab(tab){
+  document.getElementById("feed").style.display = (tab==="feed")?"block":"none";
+  document.getElementById("messages").style.display = (tab==="messages")?"block":"none";
+
+  if(tab==="messages"){
+    loadInbox();
+  }
 }
 
-/* FOLLOW FIX */
+/* FOLLOW */
 function toggleFollow(user){
   let users=getUsers();
 
@@ -297,7 +311,7 @@ function addPost(){
   loadFeed();
 }
 
-/* LIKE FIX */
+/* LIKE */
 function upvote(id){
   let users=getUsers();
 
@@ -312,6 +326,18 @@ function upvote(id){
       }
     });
   });
+
+  saveUsers(users);
+  loadFeed();
+}
+
+/* DELETE (BACK) */
+function deletePost(id,owner){
+  if(owner!==currentUser) return;
+
+  let users=getUsers();
+  users[currentUser].posts =
+    users[currentUser].posts.filter(p=>p.id!==id);
 
   saveUsers(users);
   loadFeed();
@@ -334,10 +360,7 @@ function loadFeed(){
 
     div.innerHTML=`
       <div>
-        <span class="user" onclick="openProfile('${p.user}')">
-          @${p.user}
-          ${isVerified(p.user)?'<img class="verified" src="verified.png">':''}
-        </span>
+        <span class="user" onclick="openProfile('${p.user}')">@${p.user}</span>
         <button class="follow-btn" onclick="toggleFollow('${p.user}')">
           ${isFollowing ? "Unfollow" : "Follow"}
         </button>
@@ -350,6 +373,10 @@ function loadFeed(){
       </div>
 
       <div style="font-size:11px;color:#777;">${p.time}</div>
+
+      ${p.user===currentUser ?
+        `<div class="delete" onclick="deletePost(${p.id},'${p.user}')">delete</div>`
+        : ""}
     `;
 
     posts.appendChild(div);
@@ -366,16 +393,12 @@ function loadProfile(){
   let users=getUsers();
   let u=users[viewingUser||currentUser];
 
-  profileName.innerHTML=
-    "@"+(viewingUser||currentUser)+
-    (isVerified(viewingUser||currentUser)?
-      ' <img class="verified" src="verified.png">':"");
-
+  profileName.innerText="@"+(viewingUser||currentUser);
   profilePic.src=u.pic;
   profileFollowers.innerText="Followers: "+u.followers.length;
 }
 
-/* MESSAGES FIX */
+/* MESSAGES */
 function sendMessage(){
   let users=getUsers();
   let to=msgUser.value.trim();
