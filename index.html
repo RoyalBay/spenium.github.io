@@ -22,7 +22,6 @@ body {
   font-size: 22px;
 }
 
-/* ✅ FIXED: horizontal layout */
 .container {
   max-width: 1000px;
   margin: 20px auto;
@@ -32,34 +31,32 @@ body {
   align-items: flex-start;
 }
 
-/* sidebar */
-.sidebar {
-  width: 160px;
-}
-
-/* cards */
+/* 🔧 FIXED BORDER */
 .card {
   background: white;
-  border: 1px solid #cfd6e4;
+  border: 1px solid #aeb8cc; /* FIX: more visible */
   padding: 15px;
   margin-bottom: 10px;
   border-radius: 4px;
   box-sizing: border-box;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
 }
 
-/* FIXED PROFILE BORDER */
+.sidebar {
+  width: 160px;
+}
+
+/* 🔧 FIXED PROFILE BORDER */
 #profile {
   width: 260px;
-  border: 2px solid #b8c0d6;
+  border: 2px solid #9aa8c3;
 }
 
-/* FEED FIX */
 #feed {
   flex: 1;
   min-width: 0;
 }
 
-/* inputs */
 input, button, textarea, select {
   width: 100%;
   padding: 10px;
@@ -215,7 +212,7 @@ function login() {
   saveUsers(users);
 
   loginBox.style.display = "none";
-  app.style.display = "flex"; // ✅ IMPORTANT FIX
+  app.style.display = "flex";
 
   loadProfile();
   loadFeed();
@@ -223,6 +220,29 @@ function login() {
 
 function logout() {
   location.reload();
+}
+
+/* FOLLOW (ADDED BACK) */
+function toggleFollow(user) {
+  let users = getUsers();
+
+  if (!users[currentUser].following) users[currentUser].following = [];
+  if (!users[user].followers) users[user].followers = [];
+
+  if (!users[currentUser].following.includes(user)) {
+    users[currentUser].following.push(user);
+    users[user].followers.push(currentUser);
+  } else {
+    users[currentUser].following =
+      users[currentUser].following.filter(x => x !== user);
+
+    users[user].followers =
+      users[user].followers.filter(x => x !== currentUser);
+  }
+
+  saveUsers(users);
+  loadFeed();
+  loadProfile();
 }
 
 /* POST */
@@ -252,6 +272,7 @@ function likePost(id) {
     (u.posts || []).forEach(p => {
       if (p.id === id) {
         p.likes ||= [];
+
         if (!p.likes.includes(currentUser)) {
           p.likes.push(currentUser);
         } else {
@@ -295,11 +316,22 @@ function loadFeed() {
   posts.sort((a, b) => b.id - a.id);
 
   posts.forEach(p => {
+    let verified = (users[p.user]?.followers?.length || 0) >= 5;
+
     let div = document.createElement("div");
 
     div.innerHTML = `
       <div class="post-header">
-        <span class="user">@${p.user}</span>
+        <div>
+          <span class="user">
+            @${p.user}
+            ${verified ? '<img src="verified.png" width="14">' : ''}
+          </span>
+        </div>
+
+        <button onclick="toggleFollow('${p.user}')" style="width:auto;font-size:10px;padding:3px 6px;">
+          Follow
+        </button>
       </div>
 
       <div>${p.text}</div>
