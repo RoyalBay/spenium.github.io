@@ -14,11 +14,24 @@ body {
 .topbar {
   background:#3b5998;
   color:white;
-  padding:12px;
+  padding:10px;
   display:flex;
   justify-content:space-between;
+  align-items:center;
+}
+
+/* LOGO */
+.logo {
+  display:flex;
+  align-items:center;
+  gap:8px;
   font-weight:bold;
   font-size:20px;
+}
+
+.logo img {
+  width:28px;
+  height:28px;
 }
 
 /* BUTTON */
@@ -38,20 +51,36 @@ button {
   gap:10px;
 }
 
-/* LEFT PROFILE (CLICKED USER) */
-.leftProfile {
+/* PROFILE CARDS (Vista style) */
+.profileCard {
   width:220px;
   background:white;
   padding:10px;
-  text-align:center;
-  display:none;
+  border-radius:4px;
 }
 
-.leftProfile img {
-  width:80px;
-  height:80px;
+/* HEADER */
+.profileHeader {
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+}
+
+/* PIC */
+.profileHeader img {
+  width:70px;
+  height:70px;
   border-radius:6px;
   object-fit:cover;
+}
+
+/* TEXT */
+.profileInfo {
+  font-size:13px;
+}
+
+.profileInfo b {
+  display:block;
 }
 
 /* FEED */
@@ -59,21 +88,6 @@ button {
   flex:1;
   background:white;
   padding:10px;
-}
-
-/* RIGHT PROFILE (YOU) */
-.rightProfile {
-  width:220px;
-  background:white;
-  padding:10px;
-  text-align:center;
-}
-
-.rightProfile img {
-  width:80px;
-  height:80px;
-  border-radius:6px;
-  object-fit:cover;
 }
 
 /* TEXTAREA FIX */
@@ -125,7 +139,13 @@ textarea {
 <body>
 
 <div class="topbar">
-  <div><b>WUPHF</b></div>
+
+  <!-- LOGO -->
+  <div class="logo">
+    <img src="Facebook.jpg">
+    <span>WUPHF</span>
+  </div>
+
   <div>
     <button onclick="goSettings()">Settings</button>
     <button onclick="logout()">Logout</button>
@@ -134,11 +154,15 @@ textarea {
 
 <div class="container">
 
-<!-- LEFT PROFILE (CLICKED USER) -->
-<div id="leftProfile" class="leftProfile">
-  <img id="leftPic">
-  <h3 id="leftName"></h3>
-  <p id="leftFollowers"></p>
+<!-- LEFT PROFILE -->
+<div id="leftProfile" class="profileCard" style="display:none;">
+  <div class="profileHeader">
+    <img id="leftPic">
+    <div class="profileInfo">
+      <b id="leftName"></b>
+      <span id="leftFollowers"></span>
+    </div>
+  </div>
 </div>
 
 <!-- FEED -->
@@ -149,10 +173,20 @@ textarea {
 </div>
 
 <!-- RIGHT PROFILE (YOU) -->
-<div class="rightProfile">
-  <img id="rightPic">
-  <h3 id="rightName"></h3>
-  <p id="rightFollowers"></p>
+<div class="profileCard">
+
+  <div class="profileHeader">
+    <img id="rightPic">
+    <div class="profileInfo">
+      <b id="rightName"></b>
+      <span id="rightFollowers"></span>
+    </div>
+  </div>
+
+  <!-- ONLY YOUR PROFILE CONTROLS -->
+  <input type="file" onchange="upload(event)">
+  <button onclick="savePic()">Update Profile Picture</button>
+
 </div>
 
 </div>
@@ -203,9 +237,28 @@ function showUser(user){
   let u=getUsers();
 
   leftProfile.style.display="block";
+
   leftPic.src=u[user].pic||"";
-  leftName.innerHTML="<b>@"+user+verified(u[user])+"</b>";
+  leftName.innerHTML="@"+user+verified(u[user]);
   leftFollowers.innerText="Followers: "+u[user].followers.length;
+}
+
+/* PROFILE PIC */
+let temp=null;
+
+function upload(e){
+  let r=new FileReader();
+  r.onload=()=>temp=r.result;
+  r.readAsDataURL(e.target.files[0]);
+}
+
+function savePic(){
+  if(!temp) return;
+
+  let u=getUsers();
+  u[currentUser].pic=temp;
+  saveUsers(u);
+  load();
 }
 
 /* POST */
@@ -219,7 +272,7 @@ function post(){
     text:text.value,
     time:new Date().toLocaleString(),
     likes:0,
-    likedBy:{}
+    likedBy:[]
   });
 
   saveUsers(u);
@@ -227,15 +280,17 @@ function post(){
   load();
 }
 
-/* LIKE */
+/* LIKE (FIXED PROPERLY) */
 function like(id){
   let u=getUsers();
 
   Object.values(u).forEach(x=>{
     x.posts.forEach(p=>{
-      if(p.id===id && !p.likedBy[currentUser]){
+      if(p.id===id){
+        if(p.likedBy.includes(currentUser)) return;
+
         p.likes++;
-        p.likedBy[currentUser]=true;
+        p.likedBy.push(currentUser);
       }
     });
   });
@@ -302,9 +357,9 @@ function load(){
     posts.appendChild(div);
   });
 
-  /* RIGHT PROFILE (YOU) */
+  /* RIGHT PROFILE */
   rightPic.src=u[currentUser].pic||"";
-  rightName.innerHTML="<b>@"+currentUser+"</b>";
+  rightName.innerHTML="@"+currentUser;
   rightFollowers.innerText="Followers: "+u[currentUser].followers.length;
 }
 
