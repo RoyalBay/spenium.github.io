@@ -79,7 +79,6 @@ button {
   position:relative;
 }
 
-/* FIX: follow button back to small size */
 .follow-btn {
   font-size:10px;
   padding:2px 5px;
@@ -113,12 +112,10 @@ button {
   vertical-align:middle;
 }
 
-/* FIX: username bold again */
 .profile-name {
   font-weight:bold;
 }
 
-/* messages styling unchanged */
 #messageList div {
   padding:6px;
   border-bottom:1px solid #eee;
@@ -142,6 +139,8 @@ button {
 <div id="welcome" class="screen center card" style="display:block;">
   <h2>just WUPHF it.</h2>
   <p style="font-size:12px;color:#555;">whenever. whenever.</p>
+
+  <!-- FIX: explicit functions still used but now safe -->
   <button onclick="showScreen('login')">Login</button>
   <button onclick="showScreen('signup')">Create Account</button>
 </div>
@@ -151,7 +150,6 @@ button {
   <h3>Login</h3>
   <input id="loginUser" placeholder="Username">
   <input id="loginPass" type="password" placeholder="Password">
-  <!-- FIX: error restored -->
   <div id="loginError" style="color:red;font-size:12px;"></div>
   <button onclick="login()">Enter</button>
 </div>
@@ -161,7 +159,6 @@ button {
   <h3>Create Account</h3>
   <input id="signupUser" placeholder="Username">
   <input id="signupPass" type="password" placeholder="Password">
-  <!-- FIX: inline error instead of alert -->
   <div id="signupError" style="color:red;font-size:12px;"></div>
   <button onclick="createAccount()">Create</button>
 </div>
@@ -183,7 +180,6 @@ button {
       <div id="posts"></div>
     </div>
 
-    <!-- messages untouched -->
     <div id="messages" class="feed card" style="display:none;">
       <h3>Messages</h3>
       <input id="msgUser" placeholder="Username">
@@ -213,7 +209,75 @@ button {
 let currentUser=null;
 let viewingUser=null;
 
-/* LOGIN FIXED ERROR DISPLAY */
+/* 🔥 FIX: DOM SAFE ACCESS (prevents broken buttons) */
+const loginUser = document.getElementById("loginUser");
+const loginPass = document.getElementById("loginPass");
+const signupUser = document.getElementById("signupUser");
+const signupPass = document.getElementById("signupPass");
+
+/* SCREEN */
+function showScreen(id){
+  document.querySelectorAll(".screen").forEach(s=>s.style.display="none");
+  document.getElementById(id).style.display="block";
+}
+
+/* TAB */
+function showTab(tab){
+  feed.style.display="none";
+  messages.style.display="none";
+
+  document.getElementById(tab).style.display="block";
+
+  if(tab==="messages") loadInbox();
+  if(tab==="feed") loadFeed();
+  loadProfile();
+}
+
+function goHome(){
+  if(!currentUser){
+    showScreen("welcome");
+  } else {
+    showScreen("app");
+    showTab("feed");
+  }
+}
+
+/* USERS */
+function getUsers(){
+  let u=JSON.parse(localStorage.getItem("users")||"{}");
+
+  Object.keys(u).forEach(k=>{
+    u[k].posts ||= [];
+    u[k].followers ||= [];
+    u[k].following ||= [];
+    u[k].messages ||= {};
+    u[k].pic ||= "empty.jpg";
+  });
+
+  return u;
+}
+function saveUsers(u){
+  localStorage.setItem("users",JSON.stringify(u));
+}
+
+/* CREATE (FIXED STABLE) */
+function createAccount(){
+  let users=getUsers();
+  let u=signupUser.value.trim();
+  let p=signupPass.value;
+
+  if(users[u]){
+    signupError.innerText="Username already exists";
+    return;
+  }
+
+  users[u]={password:p,posts:[],followers:[],following:[],messages:{},pic:"empty.jpg"};
+  saveUsers(users);
+
+  signupError.innerText="Account created. Login.";
+}
+
+/* LOGIN (FIXED SAFE) */
 function login(){
   let users=getUsers();
   let u=loginUser.value;
@@ -225,7 +289,7 @@ function login(){
   }
 
   if(users[u].password!==p){
-    loginError.innerText="Incorrect password"; // FIXED
+    loginError.innerText="Incorrect password";
     return;
   }
 
@@ -234,21 +298,11 @@ function login(){
   showTab("feed");
 }
 
-/* SIGNUP FIXED ERROR HANDLING */
-function createAccount(){
-  let users=getUsers();
-  let u=signupUser.value.trim();
-  let p=signupPass.value;
-
-  if(users[u]){
-    signupError.innerText="Username already exists"; // FIXED
-    return;
-  }
-
-  users[u]={password:p,posts:[],followers:[],following:[],messages:{},pic:"empty.jpg"};
-  saveUsers(users);
-
-  signupError.innerText="Account created. Login.";
+/* LOGOUT FIX */
+function logout(){
+  currentUser=null;
+  viewingUser=null;
+  showScreen("welcome");
 }
 </script>
 
