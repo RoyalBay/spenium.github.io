@@ -68,12 +68,15 @@ button {
   margin-top:5px;
 }
 
-.user { color:#3b5998; font-weight:bold; cursor:pointer; }
+.user {
+  color:#3b5998;
+  font-weight:bold;
+  cursor:pointer;
+}
 
 .post {
   border-top:1px solid #eee;
   padding:10px 0;
-  position:relative;
 }
 
 .follow-btn {
@@ -82,15 +85,9 @@ button {
   width:auto;
 }
 
-.upvote { cursor:pointer; font-size:12px; }
-
-.delete {
-  position:absolute;
-  bottom:5px;
-  right:5px;
-  font-size:11px;
-  color:red;
+.upvote {
   cursor:pointer;
+  font-size:12px;
 }
 
 .profile-pic {
@@ -113,8 +110,8 @@ button {
 
 <!-- WELCOME -->
 <div id="welcome" class="screen center card" style="display:block;">
-  <h2>WUPHF</h2>
-  <p style="font-size:12px;color:#555;">just WUPHF it.</p>
+  <h2>JUST WUPHF IT.</h2>
+  <p style="font-size:12px;color:#555;">whenever. whenever.</p>
   <button onclick="showScreen('login')">Login</button>
   <button onclick="showScreen('signup')">Create Account</button>
 </div>
@@ -185,16 +182,15 @@ function showScreen(id){
   document.getElementById(id).style.display="block";
 }
 
-/* HOME FIX */
 function goHome(){
   if(!currentUser){
     showScreen("welcome");
-    return;
+  } else {
+    showScreen("app");
+    showTab("feed");
+    viewingUser=null;
+    loadProfile();
   }
-  viewingUser=null;
-  showScreen("app");
-  showTab("feed");
-  loadProfile();
 }
 
 /* STORAGE SAFE */
@@ -251,7 +247,6 @@ function login(){
 
 /* LOGOUT */
 function logout(){
-  currentUser=null;
   location.reload();
 }
 
@@ -261,20 +256,21 @@ function isVerified(user){
   return (users[user]?.followers.length||0)>=100;
 }
 
-/* FOLLOW */
+/* FOLLOW FIX */
 function toggleFollow(user){
   let users=getUsers();
 
   if(user===currentUser) return;
 
-  if(!users[currentUser].following.includes(user)){
-    users[currentUser].following.push(user);
-    users[user].followers.push(currentUser);
+  let following = users[currentUser].following;
+  let followers = users[user].followers;
+
+  if(!following.includes(user)){
+    following.push(user);
+    followers.push(currentUser);
   } else {
-    users[currentUser].following =
-      users[currentUser].following.filter(x=>x!==user);
-    users[user].followers =
-      users[user].followers.filter(x=>x!==currentUser);
+    users[currentUser].following = following.filter(x=>x!==user);
+    users[user].followers = followers.filter(x=>x!==currentUser);
   }
 
   saveUsers(users);
@@ -321,18 +317,6 @@ function upvote(id){
   loadFeed();
 }
 
-/* DELETE */
-function deletePost(id,owner){
-  if(owner!==currentUser) return;
-
-  let users=getUsers();
-  users[currentUser].posts =
-    users[currentUser].posts.filter(p=>p.id!==id);
-
-  saveUsers(users);
-  loadFeed();
-}
-
 /* FEED */
 function loadFeed(){
   let users=getUsers();
@@ -343,6 +327,8 @@ function loadFeed(){
   all.sort((a,b)=>b.id-a.id);
 
   all.forEach(p=>{
+    let isFollowing = users[currentUser].following.includes(p.user);
+
     let div=document.createElement("div");
     div.className="post";
 
@@ -352,7 +338,9 @@ function loadFeed(){
           @${p.user}
           ${isVerified(p.user)?'<img class="verified" src="verified.png">':''}
         </span>
-        <button class="follow-btn" onclick="toggleFollow('${p.user}')">Follow</button>
+        <button class="follow-btn" onclick="toggleFollow('${p.user}')">
+          ${isFollowing ? "Unfollow" : "Follow"}
+        </button>
       </div>
 
       <div>${p.text}</div>
@@ -362,10 +350,6 @@ function loadFeed(){
       </div>
 
       <div style="font-size:11px;color:#777;">${p.time}</div>
-
-      ${p.user===currentUser?
-        `<div class="delete" onclick="deletePost(${p.id},'${p.user}')">delete</div>`
-        :""}
     `;
 
     posts.appendChild(div);
@@ -391,7 +375,7 @@ function loadProfile(){
   profileFollowers.innerText="Followers: "+u.followers.length;
 }
 
-/* MESSAGES FIX (TRUE 2-WAY) */
+/* MESSAGES FIX */
 function sendMessage(){
   let users=getUsers();
   let to=msgUser.value.trim();
