@@ -6,10 +6,26 @@
 <title>WUPHF</title>
 
 <style>
-body {
+
+/* THEMES */
+body.light {
   margin:0;
   font-family:Tahoma;
   background:linear-gradient(#dfe7f3,#f5f6f7);
+}
+
+body.dark {
+  margin:0;
+  font-family:Tahoma;
+  background:#1c1c1c;
+  color:white;
+}
+
+body.dynamic {
+  margin:0;
+  font-family:Tahoma;
+  background:linear-gradient(135deg,#141e30,#243b55);
+  color:white;
 }
 
 /* TOP BAR */
@@ -19,18 +35,20 @@ body {
   padding:12px 18px;
   display:flex;
   justify-content:space-between;
+  align-items:center;
   font-weight:bold;
 }
 
-.topbar button {
+.nav button {
   background:#3b5998;
   color:white;
   border:none;
+  padding:6px 10px;
   margin-left:6px;
   cursor:pointer;
 }
 
-/* LAYOUT */
+/* LAYOUT FIX (NO RESIZING EVER) */
 .container {
   display:flex;
   max-width:1200px;
@@ -39,12 +57,35 @@ body {
 }
 
 .feed { flex:1; }
-.profile { width:260px; }
 
+.profile {
+  width:260px;
+}
+
+/* CARD */
 .card {
   background:white;
   padding:12px;
   border-radius:5px;
+}
+
+body.dark .card,
+body.dynamic .card {
+  background:#2a2a2a;
+}
+
+/* INPUT FIX (NO RESIZE ANYWHERE) */
+input, textarea {
+  width:100%;
+  padding:10px;
+  margin:6px 0;
+  box-sizing:border-box;
+  resize:none; /* FIXED */
+}
+
+/* FORCE FEED TEXT AREA SIZE */
+#postText {
+  height:90px;
 }
 
 /* POSTS */
@@ -74,12 +115,12 @@ button {
   position:absolute;
   bottom:5px;
   right:5px;
-  color:red;
   font-size:11px;
+  color:red;
   cursor:pointer;
 }
 
-/* PROFILE */
+/* PROFILE PIC */
 .profile-pic {
   width:90px;
   height:90px;
@@ -87,16 +128,27 @@ button {
   object-fit:cover;
 }
 
+/* LOGIN FIX (NO TINY BOXES) */
+#login {
+  max-width:400px;
+  margin:80px auto;
+}
+
+#login input {
+  width:100%;
+  padding:10px;
+}
+
 </style>
 </head>
 
-<body>
+<body class="light">
 
 <!-- TOP BAR -->
 <div class="topbar">
   <div onclick="goHome()" style="cursor:pointer;">WUPHF</div>
 
-  <div>
+  <div class="nav">
     <button onclick="showFeed()">Feed</button>
     <button onclick="openSettings()">Settings</button>
     <button onclick="logout()">Logout</button>
@@ -104,12 +156,12 @@ button {
 </div>
 
 <!-- LOGIN -->
-<div id="login" class="card" style="max-width:400px;margin:80px auto;">
+<div id="login" class="card">
   <h2>just WUPHF it.</h2>
   <p>whenever. wherever.</p>
 
-  <input id="username" placeholder="username">
-  <input id="password" type="password" placeholder="password">
+  <input id="user" placeholder="username">
+  <input id="pass" type="password" placeholder="password">
 
   <button onclick="login()">Login</button>
   <button onclick="createAccount()">Create Account</button>
@@ -119,13 +171,16 @@ button {
 
 <!-- SETTINGS -->
 <div id="settings" class="card" style="display:none;max-width:500px;margin:40px auto;">
-  <h2>Settings</h2>
+  <h2>Themes</h2>
+
   <button onclick="setTheme('light')">Light</button>
   <button onclick="setTheme('dark')">Dark</button>
+  <button onclick="setTheme('dynamic')">Dynamic</button>
 </div>
 
 <!-- APP -->
 <div id="app" style="display:none;">
+
 <div class="container">
 
   <!-- FEED -->
@@ -143,20 +198,25 @@ button {
     <h3>Profile</h3>
 
     <img id="profilePic" class="profile-pic">
+    
+    <!-- FIXED: BUTTON BACK -->
     <input type="file" onchange="uploadPic(event)">
+    <button onclick="refreshProfile()">Update Profile</button>
 
     <p id="profileName"></p>
     <p id="followers"></p>
   </div>
 
 </div>
+
 </div>
 
 <script>
 
 let currentUser=null;
+let likedMap={};
 
-/* USERS */
+/* USERS SAFE INIT */
 function getUsers(){
   return JSON.parse(localStorage.getItem("users")||"{}");
 }
@@ -165,23 +225,21 @@ function saveUsers(u){
   localStorage.setItem("users",JSON.stringify(u));
 }
 
-/* LOGIN (FIXED PROPERLY) */
+/* LOGIN FIX */
 function login(){
   let users=getUsers();
-  let u=username.value;
-  let p=password.value;
 
-  if(!users[u]){
+  if(!users[user.value]){
     error.innerText="User not found";
     return;
   }
 
-  if(users[u].password!==p){
+  if(users[user.value].password!==pass.value){
     error.innerText="Wrong password";
     return;
   }
 
-  currentUser=u;
+  currentUser=user.value;
 
   document.getElementById("login").style.display="none";
   document.getElementById("app").style.display="block";
@@ -194,8 +252,8 @@ function login(){
 function createAccount(){
   let users=getUsers();
 
-  users[username.value]={
-    password:password.value,
+  users[user.value]={
+    password:pass.value,
     posts:[],
     followers:[],
     pic:""
@@ -210,22 +268,14 @@ function showFeed(){
   document.getElementById("app").style.display="block";
 }
 
-/* SETTINGS */
 function openSettings(){
   document.getElementById("app").style.display="none";
   document.getElementById("settings").style.display="block";
 }
 
+/* THEME FIX */
 function setTheme(t){
   document.body.className=t;
-}
-
-/* HOME FIX */
-function goHome(){
-  if(currentUser){
-    document.getElementById("settings").style.display="none";
-    document.getElementById("app").style.display="block";
-  }
 }
 
 /* POSTS */
@@ -237,6 +287,7 @@ function addPost(){
     user:currentUser,
     text:postText.value,
     likes:0,
+    likedBy:{},
     time:new Date().toLocaleString()
   });
 
@@ -257,6 +308,7 @@ function loadFeed(){
   all.sort((a,b)=>b.id-a.id);
 
   all.forEach(p=>{
+
     let div=document.createElement("div");
     div.className="post";
 
@@ -267,21 +319,26 @@ function loadFeed(){
 
       <button onclick="like(${p.id})">▲ ${p.likes}</button>
 
-      ${p.user===currentUser?
-        `<div class="delete" onclick="del(${p.id})">delete</div>`:""}
+      ${p.user===currentUser?`<div class="delete" onclick="del(${p.id})">delete</div>`:""}
     `;
 
     posts.appendChild(div);
   });
 }
 
-/* LIKE */
+/* LIKE FIX (NO DOUBLE LIKE PER USER) */
 function like(id){
   let users=getUsers();
 
   Object.values(users).forEach(u=>{
     (u.posts||[]).forEach(p=>{
-      if(p.id===id) p.likes++;
+      if(p.id===id){
+        if(!p.likedBy) p.likedBy={};
+        if(p.likedBy[currentUser]) return;
+
+        p.likes++;
+        p.likedBy[currentUser]=true;
+      }
     });
   });
 
@@ -307,7 +364,7 @@ function loadProfile(){
   followers.innerText="Followers: "+(u.followers?.length||0);
 }
 
-/* PROFILE PIC FIX (THIS WAS BROKEN BEFORE) */
+/* PROFILE PIC FIX */
 function uploadPic(e){
   let file=e.target.files[0];
   let r=new FileReader();
@@ -320,6 +377,11 @@ function uploadPic(e){
   };
 
   r.readAsDataURL(file);
+}
+
+/* REFRESH */
+function refreshProfile(){
+  loadProfile();
 }
 
 /* LOGOUT */
