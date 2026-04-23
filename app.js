@@ -1,4 +1,3 @@
-
 let currentUser = localStorage.getItem("currentUser");
 let users = JSON.parse(localStorage.getItem("users")||"{}");
 
@@ -6,7 +5,6 @@ function save(){
   localStorage.setItem("users",JSON.stringify(users));
 }
 
-/* ENSURE USER EXISTS */
 function ensure(u){
   if(!users[u]) return;
   users[u].followers ||= [];
@@ -32,7 +30,7 @@ function post(){
   render();
 }
 
-/* LIKE (TOGGLE FIXED) */
+/* LIKE */
 function like(id){
   for(let u in users){
     for(let p of users[u].posts){
@@ -55,7 +53,7 @@ function like(id){
   render();
 }
 
-/* FOLLOW */
+/* FOLLOW (UPDATED LIVE POPUP FIX) */
 function follow(u){
   ensure(u);
 
@@ -69,6 +67,12 @@ function follow(u){
 
   save();
   render();
+
+  // LIVE POPUP UPDATE
+  if(popup.style.display==="block"){
+    let name=pname.innerText.replace("@","");
+    pfollow.innerText="Followers: "+users[name].followers.length;
+  }
 }
 
 /* DELETE */
@@ -80,7 +84,7 @@ function del(id){
   render();
 }
 
-/* PROFILE PICTURE */
+/* UPLOAD PROFILE PIC */
 function upload(file){
   let r=new FileReader();
 
@@ -93,7 +97,7 @@ function upload(file){
   r.readAsDataURL(file);
 }
 
-/* OPEN PROFILE POPUP */
+/* OPEN PROFILE */
 function openProfile(u){
   let p=users[u];
   if(!p) return;
@@ -104,7 +108,7 @@ function openProfile(u){
   pfollow.innerText="Followers: "+p.followers.length;
 }
 
-/* RENDER FEED */
+/* RENDER */
 function render(){
   let feed=document.getElementById("posts");
   if(!feed) return;
@@ -131,7 +135,6 @@ function render(){
         </button>
 
         <div>${p.text}</div>
-
         <small>${p.time}</small>
 
         <div onclick="like(${p.id})">
