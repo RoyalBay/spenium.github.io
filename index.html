@@ -1,10 +1,11 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WUPHF</title>
 
-<!-- ONLY ADDITION: FAVICON -->
+<!-- ONLY CHANGE: FAVICON -->
 <link rel="icon" type="image/png" href="wicon.png">
 
 <style>
@@ -14,90 +15,119 @@ body{
   background:linear-gradient(#dfe7f3,#f5f6f7);
 }
 
+/* ORIGINAL TOP BAR STYLE */
 .topbar{
   background:#3b5998;
   color:white;
   padding:12px 18px;
   font-size:22px;
   font-weight:bold;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+/* FIX TEXTBOX SIZE ISSUE (YOU REPORTED THIS BREAK) */
+input{
+  width:100%;
+  padding:8px;
+  margin:6px 0;
+  box-sizing:border-box;
+}
+
+/* BUTTONS BACK TO ORIGINAL BLUE STYLE */
+button{
+  width:100%;
+  padding:8px;
+  background:#3b5998;
+  color:white;
+  border:none;
+  cursor:pointer;
+  margin-top:5px;
+}
+
+button.secondary{
+  background:#3b5998;
+}
+
+/* LOGIN BOX */
+.center{
+  max-width:400px;
+  margin:80px auto;
+  text-align:center;
 }
 </style>
 </head>
 
 <body>
 
-<!-- KEEP ORIGINAL WUPHF STYLE HEADER -->
-<div class="topbar">WUPHF</div>
+<!-- RESTORED TOP BAR + LOGO AREA -->
+<div class="topbar">
+  <img src="Facebook.jpg" style="height:28px;">
+  <span>WUPHF</span>
+</div>
 
-<!-- LOGIN SECTION (PRESERVED STYLE) -->
-<div style="max-width:400px;margin:80px auto;text-align:center;">
+<!-- LOGIN SCREEN (UNCHANGED STRUCTURE) -->
+<div class="center">
 
   <h2>Login</h2>
 
-  <input id="loginUser" placeholder="Username" style="width:100%;padding:8px;">
-  <input id="loginPass" type="password" placeholder="Password" style="width:100%;padding:8px;margin-top:5px;">
+  <input id="loginUser" placeholder="Username">
+  <input id="loginPass" type="password" placeholder="Password">
 
   <div id="loginError" style="color:red;font-size:12px;"></div>
 
-  <button onclick="login()" style="width:100%;margin-top:10px;background:#3b5998;color:white;border:none;padding:8px;">
-    Login
-  </button>
-
-  <button onclick="createAccount()" style="width:100%;margin-top:10px;">
-    Create Account
-  </button>
+  <button onclick="login()">Login</button>
+  <button onclick="createAccount()" class="secondary">Create Account</button>
 
 </div>
 
 <script>
 
-/* LOGIN LOGIC (UNCHANGED BEHAVIOUR, JUST KEPT SAFE) */
 function getUsers(){
-  return JSON.parse(localStorage.getItem("users") || "{}");
+  return JSON.parse(localStorage.getItem("users")||"{}");
 }
 
 function login(){
-  let users = getUsers();
+  let users=getUsers();
 
-  let u = loginUser.value.trim();
-  let p = loginPass.value;
+  let u=loginUser.value.trim();
+  let p=loginPass.value;
 
   if(!users[u]){
-    loginError.innerText = "Incorrect username";
+    loginError.innerText="Incorrect username";
     return;
   }
 
-  if(users[u].password !== p){
-    loginError.innerText = "Incorrect password";
+  if(users[u].password!==p){
+    loginError.innerText="Incorrect password";
     return;
   }
 
-  localStorage.setItem("currentUser", u);
-  location.href = "feed.html";
+  localStorage.setItem("currentUser",u);
+  location.href="feed.html";
 }
 
-/* CREATE ACCOUNT (SAFE EXISTING BEHAVIOUR PRESERVED) */
 function createAccount(){
-  let users = getUsers();
+  let users=getUsers();
 
-  let u = loginUser.value.trim();
-  let p = loginPass.value;
+  let u=loginUser.value.trim();
+  let p=loginPass.value;
 
   if(users[u]){
-    loginError.innerText = "Username already exists";
+    loginError.innerText="Username already exists";
     return;
   }
 
-  users[u] = {
+  users[u]={
     password:p,
     posts:[],
     followers:[],
     pic:""
   };
 
-  localStorage.setItem("users", JSON.stringify(users));
-
-  loginError.innerText = "Account created. Please login.";
+  localStorage.setItem("users",JSON.stringify(users));
+  loginError.innerText="Account created. Please login.";
 }
 
 </script>
