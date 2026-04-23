@@ -2,55 +2,25 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>WUPHF Login</title>
-
+<title>WUPHF</title>
 <link rel="icon" href="wicon.png">
 
 <style>
-
 body{
   margin:0;
   font-family:Tahoma;
-  background: linear-gradient(#dfe7f3,#f5f6f7);
+  background:linear-gradient(#dfe7f3,#f5f6f7);
 }
 
-/* TOP BAR */
 .topbar{
-  background:#3b5998;
   height:44px;
-  display:flex;
-  align-items:center;
-  padding:0 12px;
+  background:#3b5998;
   color:white;
-}
-
-.logo{
   display:flex;
   align-items:center;
-  gap:8px;
+  padding:0 10px;
 }
 
-.logo img{
-  height:34px;
-}
-
-/* HEADER */
-.title{
-  text-align:center;
-  margin-top:40px;
-}
-
-.title h1{
-  font-weight:bold;
-  margin:0;
-}
-
-.title p{
-  margin-top:5px;
-  font-weight:normal;
-}
-
-/* LOGIN BOX */
 .loginBox{
   width:300px;
   margin:80px auto;
@@ -63,37 +33,32 @@ input{
   width:100%;
   padding:8px;
   margin:5px 0;
-  border:1px solid #ccc;
   box-sizing:border-box;
 }
 
 button{
   width:100%;
+  padding:8px;
+  margin-top:5px;
   background:#3b5998;
   color:white;
   border:none;
-  padding:8px;
-  margin-top:6px;
   cursor:pointer;
 }
 
-#error{
-  color:red;
-  font-size:12px;
-  min-height:14px;
+.title{
+  text-align:center;
+  margin-top:40px;
 }
 
+.title h1{ font-weight:bold; margin:0; }
+.title p{ margin:0; color:#555; }
 </style>
 </head>
 
 <body>
 
-<div class="topbar">
-  <div class="logo">
-    <img src="Facebook.jpg">
-    <b>WUPHF</b>
-  </div>
-</div>
+<div class="topbar"><b>WUPHF</b></div>
 
 <div class="title">
   <h1>just WUPHF it.</h1>
@@ -102,66 +67,40 @@ button{
 
 <div class="loginBox">
 
-  <input id="username" placeholder="username">
-  <input id="password" type="password" placeholder="password">
+<input id="username" placeholder="username">
+<input id="password" type="password" placeholder="password">
 
-  <button onclick="login()">Enter</button>
-  <button onclick="create()">Create Account</button>
+<button onclick="login()">Login</button>
+<button onclick="create()">Create Account</button>
 
-  <div id="error"></div>
+<div id="error"></div>
 
 </div>
 
 <script>
-
-let users = JSON.parse(localStorage.getItem("users") || "{}");
+let users = JSON.parse(localStorage.getItem("users")||"{}");
 
 function login(){
-  let u = username.value.trim();
-  let p = password.value.trim();
+  let u=username.value;
+  let p=password.value;
 
-  if(!users[u]){
-    error.innerText = "User not found";
-    return;
-  }
+  if(!users[u]) return error.innerText="User not found";
+  if(users[u].password!==p) return error.innerText="Wrong password";
 
-  if(users[u].password !== p){
-    error.innerText = "Incorrect password";
-    return;
-  }
-
-  /* CRITICAL FIX: ALWAYS SET STATE BEFORE REDIRECT */
-  localStorage.setItem("currentUser", u);
-
-  /* SAFETY: ensure structure exists */
-  if(!users[u].followers) users[u].followers = [];
-  if(!users[u].posts) users[u].posts = [];
-
-  localStorage.setItem("users", JSON.stringify(users));
-
-  location.href = "feed.html";
+  localStorage.setItem("currentUser",u);
+  location.href="feed.html";
 }
 
 function create(){
-  let u = username.value.trim();
-  let p = password.value.trim();
+  let u=username.value;
+  let p=password.value;
 
-  if(users[u]){
-    error.innerText = "Username already in use";
-    return;
-  }
+  if(users[u]) return error.innerText="Username exists";
 
-  users[u] = {
-    password:p,
-    followers:[],
-    posts:[],
-    pic:""
-  };
-
-  localStorage.setItem("users", JSON.stringify(users));
-  error.innerText = "Account created";
+  users[u]={password:p,followers:[],posts:[],pic:""};
+  localStorage.setItem("users",JSON.stringify(users));
+  error.innerText="Account created";
 }
-
 </script>
 
 </body>
