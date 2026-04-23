@@ -4,97 +4,55 @@
 <meta charset="UTF-8">
 <title>WUPHF Feed</title>
 
-<!-- FAVICON FIX -->
 <link rel="icon" type="image/png" href="wicon.png">
 
 <style>
 body{
   margin:0;
   font-family:Tahoma;
-  transition:0.3s;
 }
 
-/* TOP BAR (UNCHANGED FUNCTIONALLY, ONLY FIT FIX) */
+/* TOP BAR */
 .topbar{
   background:#3b5998;
   color:white;
-  padding:0 12px;
+  padding:8px;
   display:flex;
   justify-content:space-between;
   align-items:center;
-  height:44px;
+  font-weight:bold;
 }
 
-/* LOGO FIX (FAR LEFT + FIT INSIDE BAR) */
-.logo{
-  display:flex;
-  align-items:center;
-  gap:8px;
-}
-
-.logo img{
-  height:38px;
-  max-height:38px;
-}
-
-/* BUTTONS (UNCHANGED STYLE) */
+/* BUTTONS */
 button{
   background:#3b5998;
   color:white;
   border:none;
   padding:6px;
   cursor:pointer;
-  border-radius:2px;
-}
-
-/* OUTLINES (UNCHANGED FEATURE YOU HAD) */
-.profileCard,
-.feed,
-.post{
-  border:1px solid #000;
 }
 
 /* LAYOUT */
 .container{
+  display:flex;
   max-width:1100px;
   margin:20px auto;
-  display:flex;
   gap:10px;
 }
 
-/* PROFILE */
-.profileCard{
-  width:220px;
-  background:white;
-  padding:10px;
-  border-radius:4px;
-  text-align:center;
-}
-
-.profileCard img{
-  width:80px;
-  height:80px;
-  object-fit:cover;
-  border-radius:6px;
-  display:block;
-  margin:0 auto 8px auto;
-}
-
-/* FEED */
 .feed{
   flex:1;
   background:white;
   padding:10px;
+  border:1px solid #000;
 }
 
-/* TEXTAREA */
-textarea{
-  width:100%;
-  height:70px;
-  resize:none;
-  padding:8px;
-  box-sizing:border-box;
+.profile{
+  width:220px;
+  background:white;
+  padding:10px;
   border:1px solid #000;
+  text-align:center;
 }
 
 /* POST */
@@ -102,10 +60,9 @@ textarea{
   border-top:1px solid #eee;
   padding:10px;
   position:relative;
-  background:white;
 }
 
-/* USER LINK FIX (CLICKABLE PROFILE RESTORED) */
+/* USER */
 .user{
   font-weight:bold;
   color:#3b5998;
@@ -115,16 +72,22 @@ textarea{
 /* DELETE */
 .delete{
   position:absolute;
-  right:6px;
-  bottom:6px;
+  right:5px;
+  bottom:5px;
   color:red;
   cursor:pointer;
-  text-decoration:none;
 }
 
-.icon{
-  cursor:pointer;
-  margin-top:5px;
+/* FILE FIX */
+input[type="file"]{
+  width:100%;
+  border:1px solid #000;
+  padding:4px;
+}
+
+.profileBtn{
+  width:100%;
+  margin-top:6px;
 }
 </style>
 </head>
@@ -132,71 +95,125 @@ textarea{
 <body>
 
 <div class="topbar">
-
-  <!-- LOGO FIX APPLIED HERE -->
-  <div class="logo">
-    <img src="Facebook.jpg">
-    <span>WUPHF</span>
-  </div>
-
+  <div style="font-weight:bold;">WUPHF</div>
   <div>
     <button onclick="goSettings()">Settings</button>
     <button onclick="logout()">Logout</button>
   </div>
-
 </div>
 
 <div class="container">
 
-<!-- LEFT PROFILE -->
-<div id="leftProfile" class="profileCard" style="display:none;">
-  <img id="leftPic">
-  <b id="leftName"></b><br>
-  <span id="leftFollowers"></span>
+<div class="profile">
+  <img id="pic" width="80">
+  <div id="name"></div>
+  <div id="followers"></div>
+
+  <input type="file" onchange="upload(event)">
+  <button class="profileBtn" onclick="upload()">Update Profile Picture</button>
 </div>
 
-<!-- FEED -->
 <div class="feed">
-  <textarea id="text"></textarea>
+  <textarea id="text" style="width:100%;height:60px;"></textarea>
   <button onclick="post()">Post</button>
   <div id="posts"></div>
-</div>
-
-<!-- RIGHT PROFILE -->
-<div class="profileCard">
-  <img id="rightPic">
-  <b id="rightName"></b><br>
-  <span id="rightFollowers"></span>
-
-  <input type="file" accept="image/*" onchange="updatePic(event)">
-  <button onclick="updatePic()">Update Profile Picture</button>
 </div>
 
 </div>
 
 <script>
 
-let currentUser = localStorage.getItem("currentUser");
-if(!currentUser) location.href="index.html";
+let currentUser=localStorage.getItem("currentUser");
+let users=JSON.parse(localStorage.getItem("users")||"{}");
 
-/* USERS */
-function getUsers(){
-  let u = JSON.parse(localStorage.getItem("users") || "{}");
+function save(){
+  localStorage.setItem("users",JSON.stringify(users));
+}
 
-  for(let k in u){
-    u[k].posts ||= [];
-    u[k].followers ||= [];
-    u[k].pic ||= "";
+/* FOLLOW FIX */
+function follow(u){
+  if(!users[u]) return;
+
+  let f=users[u].followers;
+
+  if(f.includes(currentUser)){
+    users[u].followers=f.filter(x=>x!==currentUser);
+  } else {
+    f.push(currentUser);
   }
 
-  return u;
+  save();
+  load();
 }
 
-function saveUsers(u){
-  localStorage.setItem("users", JSON.stringify(u));
+/* POST */
+function post(){
+  users[currentUser].posts.unshift({
+    id:Date.now(),
+    user:currentUser,
+    text:text.value,
+    likes:0,
+    likedBy:[]
+  });
+
+  save();
+  text.value="";
+  load();
 }
 
-/* NAV */
+/* LIKE */
+function like(id){
+  for(let u in users){
+    for(let p of users[u].posts){
+      if(p.id===id){
+        p.likedBy ||= [];
+        if(p.likedBy.includes(currentUser)){
+          p.likedBy=p.likedBy.filter(x=>x!==currentUser);
+        } else {
+          p.likedBy.push(currentUser);
+        }
+        p.likes=p.likedBy.length;
+      }
+    }
+  }
+  save();
+  load();
+}
+
+/* LOAD */
+function load(){
+  posts.innerHTML="";
+
+  let all=[];
+  for(let u in users){
+    all.push(...users[u].posts);
+  }
+
+  all.sort((a,b)=>b.id-a.id);
+
+  all.forEach(p=>{
+    let div=document.createElement("div");
+    div.className="post";
+
+    div.innerHTML=`
+      <span class="user" onclick="follow('${p.user}')">
+        @${p.user}
+      </span>
+
+      <div>${p.text}</div>
+
+      <div onclick="like(${p.id})">▲ ${p.likes||0}</div>
+    `;
+
+    posts.appendChild(div);
+  });
+
+  name.innerText=currentUser;
+  followers.innerText="Followers: "+(users[currentUser].followers.length||0);
+}
+
+load();
+
 function logout(){
   localStorage.removeItem("currentUser");
   location.href="index.html";
@@ -206,153 +223,18 @@ function goSettings(){
   location.href="settings.html";
 }
 
-/* VERIFIED */
-function verified(u){
-  return (u.followers?.length || 0) >= 100 ? " ◆" : "";
-}
-
-/* PROFILE LINK FIX (RESTORED CLICK FUNCTION) */
-function showUser(user){
-  let u = getUsers();
-  if(!u[user]) return;
-
-  leftProfile.style.display = "block";
-  leftPic.src = u[user].pic || "";
-  leftName.innerText = "@" + user + verified(u[user]);
-  leftFollowers.innerText = "Followers: " + (u[user].followers?.length || 0);
-}
-
-/* MAKE USERNAME CLICKABLE (IMPORTANT FIX) */
-function post(){
-  let u=getUsers();
-  if(!text.value.trim()) return;
-
-  u[currentUser].posts.unshift({
-    id:Date.now(),
-    user:currentUser,
-    text:text.value,
-    time:new Date().toLocaleString(),
-    likes:0,
-    likedBy:[]
-  });
-
-  saveUsers(u);
-  text.value="";
-  load();
-}
-
-/* FOLLOW (UNCHANGED) */
-function follow(target){
-  let u=getUsers();
-  if(!u[target]) return;
-
-  u[target].followers ||= [];
-
-  let f=u[target].followers;
-
-  if(f.includes(currentUser)){
-    u[target].followers = f.filter(x=>x!==currentUser);
-  } else {
-    f.push(currentUser);
-  }
-
-  saveUsers(u);
-  load();
-}
-
-/* LIKE (UNCHANGED) */
-function like(id){
-  let u=getUsers();
-
-  for(let x in u){
-    for(let p of u[x].posts){
-      if(p.id===id){
-
-        p.likedBy ||= [];
-
-        if(p.likedBy.includes(currentUser)){
-          p.likedBy = p.likedBy.filter(u => u !== currentUser);
-        } else {
-          p.likedBy.push(currentUser);
-        }
-
-        p.likes = p.likedBy.length;
-      }
-    }
-  }
-
-  saveUsers(u);
-  load();
-}
-
-/* DELETE */
-function del(id){
-  let u=getUsers();
-  u[currentUser].posts = u[currentUser].posts.filter(p=>p.id!==id);
-  saveUsers(u);
-  load();
-}
-
-/* PROFILE UPLOAD */
-function updatePic(e){
-  let file = e?.target?.files?.[0];
+function upload(e){
+  let file=e?.target?.files?.[0];
   if(!file) return;
 
-  let reader = new FileReader();
-
-  reader.onload=function(){
-    let u=getUsers();
-    u[currentUser].pic = reader.result;
-    saveUsers(u);
+  let r=new FileReader();
+  r.onload=()=>{
+    users[currentUser].pic=r.result;
+    save();
     load();
   };
-
-  reader.readAsDataURL(file);
+  r.readAsDataURL(file);
 }
-
-/* LOAD */
-function load(){
-  let u=getUsers();
-  posts.innerHTML="";
-
-  let all=[];
-  for(let x in u){
-    all.push(...u[x].posts);
-  }
-
-  all.sort((a,b)=>b.id-a.id);
-
-  all.forEach(p=>{
-    let owner=u[p.user];
-    if(!owner) return;
-
-    let div=document.createElement("div");
-    div.className="post";
-
-    div.innerHTML=`
-      <span class="user" onclick="showUser('${p.user}')">
-        @${p.user}${verified(owner)}
-      </span>
-
-      <div>${p.text}</div>
-      <div style="font-size:11px;color:gray;">${p.time}</div>
-
-      <div onclick="like(${p.id})">▲ ${p.likes}</div>
-
-      ${p.user===currentUser ? `<div class="delete" onclick="del(${p.id})">delete</div>` : ""}
-    `;
-
-    posts.appendChild(div);
-  });
-
-  let me=getUsers()[currentUser];
-
-  rightPic.src=me.pic||"";
-  rightName.innerText="@"+currentUser;
-  rightFollowers.innerText="Followers: "+me.followers.length;
-}
-
-load();
 
 </script>
 
