@@ -13,7 +13,7 @@ body{
   font-family:Tahoma;
 }
 
-/* TOP BAR (MATCH FEED SIZE EXACTLY) */
+/* TOP BAR */
 .topbar{
   background:#3b5998;
   color:white;
@@ -24,7 +24,7 @@ body{
   padding:0 12px;
 }
 
-/* LOGO (MATCH FEED) */
+/* LOGO */
 .logo{
   display:flex;
   align-items:center;
@@ -35,6 +35,21 @@ body{
   height:34px;
 }
 
+/* BLUE BUTTON STYLE RESTORED */
+button{
+  background:#3b5998;
+  color:white;
+  border:none;
+  padding:6px 10px;
+  cursor:pointer;
+  font-weight:normal;
+}
+
+/* BACK BUTTON (NOW BLUE LIKE EVERYTHING ELSE) */
+.backBtn{
+  margin-left:auto;
+}
+
 /* SETTINGS BOX */
 .container{
   max-width:600px;
@@ -42,17 +57,6 @@ body{
   background:white;
   padding:20px;
   border:1px solid #ccc;
-}
-
-/* BACK BUTTON FIX (FAR RIGHT) */
-.backBtn{
-  margin-left:auto;
-  background:white;
-  color:#3b5998;
-  border:none;
-  padding:6px 10px;
-  cursor:pointer;
-  font-weight:bold;
 }
 
 </style>
@@ -67,7 +71,7 @@ body{
     <b>WUPHF</b>
   </div>
 
-  <!-- MUST STAY FAR RIGHT -->
+  <!-- BACK BUTTON FIXED -->
   <button class="backBtn" onclick="location.href='feed.html'">
     Back
   </button>
@@ -76,9 +80,9 @@ body{
 
 <div class="container">
 
-  <!-- ORIGINAL CONTENT KEPT -->
   <h3>Themes</h3>
 
+  <!-- ALL BLUE BUTTONS RESTORED -->
   <button onclick="setTheme('light')">Light</button>
   <button onclick="setTheme('dark')">Dark</button>
   <button onclick="setTheme('dynamic')">Dynamic</button>
