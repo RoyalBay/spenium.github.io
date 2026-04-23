@@ -100,13 +100,13 @@ button{
   cursor:pointer;
 }
 
-/* LEFT POPUP PROFILE */
+/* LEFT POPUP PROFILE (UPDATED SIZE ONLY) */
 #popup{
   display:none;
   position:fixed;
   left:10px;
   top:80px;
-  width:180px;
+  width:220px;   /* MATCH RIGHT PROFILE */
   background:white;
   border:1px solid #ccc;
   padding:10px;
@@ -117,9 +117,7 @@ button{
 
 <body>
 
-<!-- TOP BAR -->
 <div class="topbar">
-
   <div class="left">
     <img src="Facebook.jpg">
     <b>WUPHF</b>
@@ -127,9 +125,8 @@ button{
 
   <div>
     <button onclick="location.href='settings.html'">Settings</button>
-    <button onclick="logout()">Logout</button>
+    <button onclick="location.href='index.html'">Logout</button>
   </div>
-
 </div>
 
 <!-- POPUP PROFILE -->
@@ -139,24 +136,21 @@ button{
   <div id="pfollow"></div>
 </div>
 
-<!-- MAIN -->
 <div class="container">
 
-  <!-- FEED -->
   <div class="feed">
-
     <textarea id="text"></textarea>
     <button onclick="post()">Post</button>
-
     <div id="posts"></div>
-
   </div>
 
-  <!-- PROFILE -->
   <div class="profile">
 
     <img id="rightPic" width="70" height="70" style="object-fit:cover;">
-    <div id="rightName"></div>
+    
+    <!-- BOLD USERNAME FIX -->
+    <div id="rightName" style="font-weight:bold;"></div>
+
     <div id="rightFollowers"></div>
 
     <input type="file" id="file">
@@ -167,13 +161,6 @@ button{
 </div>
 
 <script src="app.js"></script>
-
-<script>
-function logout(){
-  localStorage.removeItem("currentUser");
-  location.href="index.html";
-}
-</script>
 
 </body>
 </html>
