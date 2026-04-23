@@ -28,6 +28,7 @@ function post(){
 
   save();
   render();
+  applyTheme();
 }
 
 /* LIKE */
