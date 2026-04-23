@@ -6,23 +6,55 @@
 <link rel="icon" href="wicon.png">
 
 <style>
+
 body{
-  font-family:Tahoma;
   margin:0;
+  font-family:Tahoma;
+  background:#f5f6f7;
 }
 
+/* TOP BAR (FIXED SMALL, NOT HUGE) */
 .topbar{
+  height:44px;
   background:#3b5998;
   color:white;
-  padding:10px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 10px;
 }
 
+.topbar .left{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.topbar img{
+  height:32px;
+}
+
+/* BACK BUTTON FAR RIGHT */
+.backBtn{
+  background:white;
+  color:#3b5998;
+  border:none;
+  padding:6px 10px;
+  cursor:pointer;
+}
+
+/* BOX */
 .box{
   width:300px;
-  margin:50px auto;
+  margin:40px auto;
   background:white;
   border:1px solid #ccc;
-  padding:15px;
+  padding:10px;
+  box-sizing:border-box;
+}
+
+h3{
+  margin-top:0;
 }
 
 button{
@@ -32,20 +64,32 @@ button{
   background:#3b5998;
   color:white;
   border:none;
+  cursor:pointer;
 }
+
 </style>
 </head>
 
 <body>
 
+<!-- TOP BAR -->
 <div class="topbar">
-  <button onclick="location.href='feed.html'">Back</button>
-  WUPHF Settings
+
+  <div class="left">
+    <img src="Facebook.jpg">
+    <b>WUPHF</b>
+  </div>
+
+  <button class="backBtn" onclick="location.href='feed.html'">Back</button>
+
 </div>
 
+<!-- SETTINGS -->
 <div class="box">
 
-<h3>Themes</h3>
+<h3>Settings</h3>
+
+<h4>Themes</h4>
 
 <button onclick="setTheme('light')">Light</button>
 <button onclick="setTheme('dark')">Dark</button>
@@ -56,7 +100,6 @@ button{
 <script>
 function setTheme(t){
   localStorage.setItem("theme",t);
-  alert("Theme set to "+t);
 }
 </script>
 
