@@ -11,7 +11,6 @@ body{
   margin:0;
   font-family:Tahoma;
   background:#f5f6f7;
-  box-sizing:border-box;
 }
 
 /* TOP BAR */
@@ -35,7 +34,7 @@ body{
   height:32px;
 }
 
-/* MAIN LAYOUT */
+/* LAYOUT */
 .container{
   display:flex;
   max-width:1100px;
@@ -51,13 +50,12 @@ body{
   padding:10px;
 }
 
-/* 🔥 SINGLE SOURCE OF TRUTH FOR BOTH PROFILES */
-.profileBox{
+/* RIGHT PROFILE (REFERENCE SIZE) */
+.profile{
   width:220px;
   background:white;
   border:1px solid #ccc;
   padding:10px;
-  box-sizing:border-box;
 }
 
 /* POSTS */
@@ -67,12 +65,14 @@ body{
   position:relative;
 }
 
+/* USERNAME */
 .user{
   font-weight:bold;
   cursor:pointer;
   color:#3b5998;
 }
 
+/* DELETE */
 .delete{
   position:absolute;
   bottom:5px;
@@ -82,7 +82,7 @@ body{
   font-size:12px;
 }
 
-/* INPUT FIX */
+/* TEXTAREA FIX */
 textarea{
   width:100%;
   height:60px;
@@ -100,19 +100,20 @@ button{
   cursor:pointer;
 }
 
-/* POPUP (NOW IDENTICAL SIZE BECAUSE SAME CLASS) */
+/* LEFT POPUP PROFILE (NOW MATCHES RIGHT PROFILE SIZE) */
 #popup{
   display:none;
   position:fixed;
   left:10px;
   top:80px;
+  width:220px;     /* MATCH RIGHT PROFILE */
+  background:white;
+  border:1px solid #ccc;
+  padding:10px;
+  box-sizing:border-box;
 }
 
-/* make popup USE SAME BOX STYLE */
-#popupInner{
-  /* inherits .profileBox styling */
-}
-
+/* POPUP USERNAME BOLD FIX */
 #pname{
   font-weight:bold;
 }
@@ -136,18 +137,14 @@ button{
 
 </div>
 
-<!-- LEFT POPUP -->
+<!-- LEFT POPUP PROFILE -->
 <div id="popup">
 
-  <div class="profileBox">
-
-    <img id="ppic" width="60">
-
-    <div id="pname"></div>
-
-    <div id="pfollow"></div>
-
-  </div>
+  <img id="ppic" width="60">
+  
+  <div id="pname"></div>   <!-- NOW BOLD VIA CSS -->
+  
+  <div id="pfollow"></div>
 
 </div>
 
@@ -159,12 +156,11 @@ button{
     <div id="posts"></div>
   </div>
 
-  <!-- RIGHT PROFILE -->
-  <div class="profileBox">
+  <div class="profile">
 
     <img id="rightPic" width="70" height="70" style="object-fit:cover;">
 
-    <div id="rightName"></div>
+    <div id="rightName" style="font-weight:bold;"></div>
 
     <div id="rightFollowers"></div>
 
