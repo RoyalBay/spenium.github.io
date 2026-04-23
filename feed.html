@@ -172,27 +172,43 @@ button{
 </div>
 
 <script src="app.js">
-  function applyTheme(){
+ function applyTheme(){
 
   let t = localStorage.getItem("theme") || "light";
 
+  document.body.style.transition="background 0.3s ease";
+
   if(t==="dark"){
     document.body.style.background="#1e1e1e";
+
     document.querySelector(".feed").style.background="#2b2b2b";
     document.querySelector(".profile").style.background="#2b2b2b";
+
+    document.body.style.color="white";
   }
 
   else if(t==="light"){
     document.body.style.background="#f5f6f7";
+
+    document.querySelector(".feed").style.background="white";
+    document.querySelector(".profile").style.background="white";
+
+    document.body.style.color="black";
   }
 
   else if(t==="dynamic"){
-    let c = Math.floor(Date.now()/1000)%255;
-    document.body.style.background=`rgb(${c},${c},255)`;
+    let t0 = Date.now()/800;
+    let r = Math.floor(128 + 127*Math.sin(t0));
+    let g = Math.floor(128 + 127*Math.sin(t0+2));
+    let b = Math.floor(128 + 127*Math.sin(t0+4));
+
+    document.body.style.background=`rgb(${r},${g},${b})`;
   }
 }
-
+  
 applyTheme();
+setInterval(applyTheme, 2000);
+  
 </script>
 
 </body>
