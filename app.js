@@ -5,7 +5,7 @@ function save(){
   localStorage.setItem("users", JSON.stringify(users));
 }
 
-/* FOLLOW FIX (THIS WAS BREAKING BEFORE) */
+/* FOLLOW (FIXED + RELIABLE) */
 function follow(user){
   if(!users[user]) return;
 
@@ -31,7 +31,7 @@ function post(){
     id: Date.now(),
     user: currentUser,
     text: text.value,
-    time: new Date().toLocaleString(),   // FIX: timestamp restored
+    time: new Date().toLocaleString(),
     likes: 0,
     likedBy: []
   });
@@ -71,4 +71,17 @@ function del(id){
 
   save();
   load();
+}
+
+/* PROFILE PIC */
+function uploadPic(file){
+  if(!file) return;
+
+  let r = new FileReader();
+  r.onload = () => {
+    users[currentUser].pic = r.result;
+    save();
+    load();
+  };
+  r.readAsDataURL(file);
 }
