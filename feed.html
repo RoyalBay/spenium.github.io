@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>WUPHF</title>
+<title>WUPHF Feed</title>
 
 <link rel="icon" href="wicon.png">
 
@@ -14,7 +14,7 @@ body{
   background:#f5f6f7;
 }
 
-/* TOP BAR FIX (LOGO CENTER ISSUE FIXED) */
+/* TOP BAR */
 .topbar{
   background:#3b5998;
   color:white;
@@ -33,7 +33,6 @@ body{
 
 .logo img{
   height:34px;
-  object-fit:contain;
 }
 
 /* LAYOUT */
@@ -44,6 +43,14 @@ body{
   gap:10px;
 }
 
+/* FEED CENTER */
+.feed{
+  flex:1;
+  background:white;
+  border:1px solid #ccc;
+  padding:10px;
+}
+
 /* RIGHT PROFILE */
 .profile{
   width:220px;
@@ -52,9 +59,13 @@ body{
   padding:10px;
 }
 
-/* FEED */
-.feed{
-  flex:1;
+/* LEFT POPUP PROFILE */
+#leftProfile{
+  display:none;
+  position:fixed;
+  left:10px;
+  top:80px;
+  width:180px;
   background:white;
   border:1px solid #ccc;
   padding:10px;
@@ -74,7 +85,7 @@ body{
   cursor:pointer;
 }
 
-/* DELETE FIX */
+/* DELETE */
 .delete{
   position:absolute;
   right:6px;
@@ -89,17 +100,20 @@ textarea{
   height:60px;
   resize:none;
   border:1px solid #ccc;
+  box-sizing:border-box;
 }
 
-/* BUTTON STYLE RESTORED */
+/* BUTTONS */
 button{
   background:#3b5998;
   color:white;
   border:none;
   padding:6px;
   cursor:pointer;
+  margin-top:5px;
 }
 
+/* PROFILE IMAGE */
 .profilePic{
   width:70px;
   height:70px;
@@ -111,6 +125,7 @@ button{
 
 <body>
 
+<!-- TOP BAR -->
 <div class="topbar">
 
   <div class="logo">
@@ -119,109 +134,56 @@ button{
   </div>
 
   <div>
-    <button onclick="goSettings()">Settings</button>
+    <button onclick="location.href='settings.html'">Settings</button>
     <button onclick="logout()">Logout</button>
   </div>
 
 </div>
 
-<div class="container">
-
 <!-- LEFT PROFILE POPUP -->
-<div id="leftProfile" class="profile" style="display:none;">
+<div id="leftProfile">
   <img id="leftPic" class="profilePic">
   <div id="leftName"></div>
   <div id="leftFollowers"></div>
 </div>
 
-<!-- FEED -->
-<div class="feed">
-  <textarea id="text"></textarea>
-  <button onclick="post()">Post</button>
-  <div id="posts"></div>
+<!-- MAIN -->
+<div class="container">
+
+  <!-- FEED -->
+  <div class="feed">
+
+    <textarea id="text"></textarea>
+    <button onclick="post()">Post</button>
+
+    <div id="posts"></div>
+
+  </div>
+
+  <!-- RIGHT PROFILE -->
+  <div class="profile">
+
+    <img id="rightPic" class="profilePic">
+    <div id="rightName"></div>
+    <div id="rightFollowers"></div>
+
+    <input type="file" id="fileInput">
+    <button onclick="uploadPic(fileInput.files[0])">
+      Update Profile Picture
+    </button>
+
+  </div>
+
 </div>
 
-<!-- RIGHT PROFILE -->
-<div class="profile">
-  <img id="rightPic" class="profilePic">
-  <div id="rightName"></div>
-  <div id="rightFollowers"></div>
-
-  <!-- FIXED SPACING (VISIBLE + NOT CRAMMED) -->
-  <div style="margin-top:12px;"></div>
-
-  <input type="file" id="fileInput">
-  <button onclick="uploadPic(fileInput.files[0])">
-    Update Profile Picture
-  </button>
-</div>
-
-</div>
-
+<!-- IMPORTANT: MUST LOAD LAST -->
 <script src="app.js"></script>
 
 <script>
-
-/* RENDER FUNCTION (RESTORES EVERYTHING LOST) */
-function render(){
-  posts.innerHTML = "";
-
-  let all = [];
-  for(let u in users){
-    all.push(...users[u].posts);
-  }
-
-  all.sort((a,b)=>b.id-a.id);
-
-  all.forEach(p=>{
-    let owner = users[p.user];
-    if(!owner) return;
-
-    let div = document.createElement("div");
-    div.className = "post";
-
-    div.innerHTML = `
-      <span class="user" onclick="openProfile('${p.user}')">
-        @${p.user}${verified(p.user)}
-      </span>
-
-      <button onclick="follow('${p.user}')">
-        ${owner.followers.includes(currentUser) ? "Unfollow" : "Follow"}
-      </button>
-
-      <div>${p.text}</div>
-
-      <div style="font-size:11px;color:gray;">
-        ${p.time || ""}
-      </div>
-
-      <div onclick="like(${p.id})">▲ ${p.likes || 0}</div>
-
-      ${p.user===currentUser ?
-        `<div class="delete" onclick="del(${p.id})">delete</div>` : ""}
-    `;
-
-    posts.appendChild(div);
-  });
-
-  let me = users[currentUser];
-
-  rightPic.src = me.pic || "";
-  rightName.innerHTML = "<b>@"+currentUser+"</b>" + verified(currentUser);
-  rightFollowers.innerText = "Followers: " + me.followers.length;
-}
-
-render();
-
 function logout(){
   localStorage.removeItem("currentUser");
   location.href="index.html";
 }
-
-function goSettings(){
-  location.href="settings.html";
-}
-
 </script>
 
 </body>
