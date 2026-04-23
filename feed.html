@@ -10,7 +10,7 @@
 body{
   margin:0;
   font-family:Tahoma;
-  background:linear-gradient(#dfe7f3,#f5f6f7);
+  transition:0.3s;
 }
 
 /* TOP BAR */
@@ -24,7 +24,6 @@ body{
   padding:0 12px;
 }
 
-/* LOGO */
 .logo{
   display:flex;
   align-items:center;
@@ -35,15 +34,6 @@ body{
   height:30px;
 }
 
-/* BUTTON STYLE (RESTORED BLUE STYLE) */
-button{
-  background:#3b5998;
-  color:white;
-  border:none;
-  padding:6px;
-  cursor:pointer;
-}
-
 /* LAYOUT */
 .container{
   max-width:1100px;
@@ -52,18 +42,15 @@ button{
   gap:10px;
 }
 
-/* LEFT PROFILE (POPUP STYLE RESTORED) */
-.leftProfile,
-.rightProfile{
-  width:220px;
+.feed{
+  flex:1;
   background:white;
   padding:10px;
   border:1px solid #ccc;
 }
 
-/* FEED */
-.feed{
-  flex:1;
+.profile{
+  width:220px;
   background:white;
   padding:10px;
   border:1px solid #ccc;
@@ -76,29 +63,23 @@ button{
   position:relative;
 }
 
-/* USER NAME */
+/* USERNAME (FIX BOLD ISSUE) */
 .user{
   font-weight:bold;
   color:#3b5998;
   cursor:pointer;
 }
 
-/* FOLLOW BUTTON BESIDE NAME */
-.followBtn{
-  margin-left:8px;
-  font-size:11px;
-}
-
-/* DELETE */
-.delete{
-  position:absolute;
-  right:6px;
-  bottom:6px;
-  color:red;
+/* BUTTONS */
+button{
+  background:#3b5998;
+  color:white;
+  border:none;
+  padding:6px;
   cursor:pointer;
 }
 
-/* PROFILE IMAGE */
+/* PROFILE PIC */
 .profilePic{
   width:70px;
   height:70px;
@@ -106,18 +87,20 @@ button{
   border-radius:5px;
 }
 
-/* TEXTAREA FIX (NO RESIZE BUG) */
+/* TEXTAREA FIX */
 textarea{
   width:100%;
   height:60px;
   resize:none;
+  box-sizing:border-box;
+  border:1px solid #ccc;
 }
 </style>
 </head>
 
 <body>
 
-<!-- TOP BAR WITH LOGO RESTORED -->
+<!-- TOP BAR -->
 <div class="topbar">
 
   <div class="logo">
@@ -134,8 +117,8 @@ textarea{
 
 <div class="container">
 
-<!-- LEFT PROFILE (CLICKED USER) -->
-<div id="leftProfile" class="leftProfile" style="display:none;">
+<!-- LEFT PROFILE -->
+<div id="leftProfile" class="profile" style="display:none;">
   <img id="leftPic" class="profilePic">
   <div id="leftName"></div>
   <div id="leftFollowers"></div>
@@ -148,11 +131,15 @@ textarea{
   <div id="posts"></div>
 </div>
 
-<!-- RIGHT PROFILE (CURRENT USER) -->
-<div class="rightProfile">
+<!-- RIGHT PROFILE -->
+<div class="profile">
   <img id="rightPic" class="profilePic">
   <div id="rightName"></div>
   <div id="rightFollowers"></div>
+
+  <!-- RESTORED UPLOAD SYSTEM -->
+  <input type="file" onchange="upload(event)">
+  <button onclick="upload()">Update Profile Picture</button>
 </div>
 
 </div>
@@ -162,27 +149,49 @@ textarea{
 let currentUser = localStorage.getItem("currentUser");
 let users = JSON.parse(localStorage.getItem("users")||"{}");
 
+/* SAVE */
 function save(){
   localStorage.setItem("users",JSON.stringify(users));
 }
 
-/* VERIFIED DIAMOND RESTORED */
+/* VERIFIED */
 function verified(u){
   return (u.followers?.length || 0) >= 100 ? " ◆" : "";
 }
 
-/* PROFILE OPEN RESTORED */
+/* THEME FIX (DYNAMIC BACKGROUND RESTORED) */
+function applyTheme(){
+  let t = localStorage.getItem("theme") || "light";
+
+  if(t==="light"){
+    document.body.style.background="#f5f6f7";
+    document.body.style.color="black";
+  }
+
+  if(t==="dark"){
+    document.body.style.background="#2b2b2b";
+    document.body.style.color="white";
+  }
+
+  if(t==="dynamic"){
+    document.body.style.background="linear-gradient(#3b5998,#8b9dc3)";
+    document.body.style.color="black";
+  }
+}
+applyTheme();
+
+/* PROFILE VIEW */
 function showUser(u){
   let data = users[u];
   if(!data) return;
 
   leftProfile.style.display="block";
   leftPic.src=data.pic||"";
-  leftName.innerHTML="@"+u+verified(data);
+  leftName.innerHTML="<b>@"+u+"</b>"+verified(data);
   leftFollowers.innerText="Followers: "+data.followers.length;
 }
 
-/* FOLLOW / UNFOLLOW RESTORED */
+/* FOLLOW FIX (NOW ACTUALLY WORKS AGAIN) */
 function follow(u){
   if(!users[u]) return;
 
@@ -244,12 +253,25 @@ function del(id){
   load();
 }
 
-/* LOAD FEED (FULL RESTORE) */
+/* PROFILE PIC UPLOAD FIX */
+function upload(e){
+  let file = e?.target?.files?.[0];
+  if(!file) return;
+
+  let r = new FileReader();
+  r.onload = ()=>{
+    users[currentUser].pic = r.result;
+    save();
+    load();
+  };
+  r.readAsDataURL(file);
+}
+
+/* LOAD */
 function load(){
   posts.innerHTML="";
 
   let all=[];
-
   for(let u in users){
     all.push(...users[u].posts);
   }
@@ -268,7 +290,7 @@ function load(){
         @${p.user}${verified(owner)}
       </span>
 
-      <button class="followBtn" onclick="follow('${p.user}')">
+      <button onclick="follow('${p.user}')">
         ${owner.followers.includes(currentUser) ? "Unfollow" : "Follow"}
       </button>
 
@@ -276,7 +298,7 @@ function load(){
 
       <div onclick="like(${p.id})">▲ ${p.likes||0}</div>
 
-      ${p.user===currentUser ? `<div class="delete" onclick="del(${p.id})">delete</div>` : ""}
+      ${p.user===currentUser ? `<div onclick="del(${p.id})" style="color:red;cursor:pointer;">delete</div>` : ""}
     `;
 
     posts.appendChild(div);
@@ -285,11 +307,12 @@ function load(){
   let me = users[currentUser];
 
   rightPic.src = me.pic || "";
-  rightName.innerHTML = "@"+currentUser;
+  rightName.innerHTML = "<b>@"+currentUser+"</b>";
   rightFollowers.innerText = "Followers: "+me.followers.length;
 }
 
-/* NAV */
+load();
+
 function logout(){
   localStorage.removeItem("currentUser");
   location.href="index.html";
@@ -298,8 +321,6 @@ function logout(){
 function goSettings(){
   location.href="settings.html";
 }
-
-load();
 
 </script>
 
