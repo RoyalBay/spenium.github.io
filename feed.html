@@ -7,12 +7,15 @@
 <link rel="icon" type="image/png" href="wicon.png">
 
 <style>
+
+/* BODY */
 body{
   margin:0;
   font-family:Tahoma;
   background:#f5f6f7;
 }
 
+/* TOP BAR (RESTORED BLUE + BUTTON FIX) */
 .topbar{
   background:#3b5998;
   color:white;
@@ -23,6 +26,7 @@ body{
   padding:0 12px;
 }
 
+/* LOGO */
 .logo{
   display:flex;
   align-items:center;
@@ -33,6 +37,17 @@ body{
   height:30px;
 }
 
+/* BUTTON FIX (THIS WAS CAUSING GREY ISSUE) */
+button{
+  background:#3b5998;
+  color:white;
+  border:none;
+  padding:6px;
+  cursor:pointer;
+  font-weight:normal;
+}
+
+/* LAYOUT */
 .container{
   display:flex;
   max-width:1100px;
@@ -40,15 +55,17 @@ body{
   gap:10px;
 }
 
-.feed{
-  flex:1;
+/* PROFILE BOX */
+.profile{
+  width:220px;
   background:white;
   padding:10px;
   border:1px solid #ccc;
 }
 
-.profile{
-  width:220px;
+/* FEED */
+.feed{
+  flex:1;
   background:white;
   padding:10px;
   border:1px solid #ccc;
@@ -61,14 +78,14 @@ body{
   position:relative;
 }
 
-/* USER */
+/* USERNAME (FIXED BOLD + CLICKABLE) */
 .user{
   font-weight:bold;
   color:#3b5998;
   cursor:pointer;
 }
 
-/* DELETE FIX POSITION */
+/* DELETE POSITION FIX */
 .delete{
   position:absolute;
   right:6px;
@@ -77,25 +94,29 @@ body{
   cursor:pointer;
 }
 
+/* PROFILE PIC */
+.profilePic{
+  width:70px;
+  height:70px;
+  object-fit:cover;
+  border-radius:5px;
+}
+
 /* TEXTAREA FIX */
 textarea{
   width:100%;
   height:60px;
   resize:none;
   box-sizing:border-box;
-}
-
-/* FILE BUTTON FIX */
-input[type="file"]{
-  width:100%;
-  padding:4px;
   border:1px solid #ccc;
 }
+
 </style>
 </head>
 
 <body>
 
+<!-- TOP BAR -->
 <div class="topbar">
 
   <div class="logo">
@@ -112,19 +133,29 @@ input[type="file"]{
 
 <div class="container">
 
-<div class="profile">
-  <img id="pic" width="70">
-  <div id="name"></div>
-  <div id="followers"></div>
-
-  <input type="file" id="fileInput">
-  <button onclick="upload()">Update Profile Picture</button>
+<!-- LEFT PROFILE (CLICKED USER) -->
+<div id="leftProfile" class="profile" style="display:none;">
+  <img id="leftPic" class="profilePic">
+  <div id="leftName"></div>
+  <div id="leftFollowers"></div>
 </div>
 
+<!-- FEED -->
 <div class="feed">
   <textarea id="text"></textarea>
   <button onclick="post()">Post</button>
   <div id="posts"></div>
+</div>
+
+<!-- RIGHT PROFILE -->
+<div class="profile">
+  <img id="rightPic" class="profilePic">
+  <div id="rightName"></div>
+  <div id="rightFollowers"></div>
+
+  <!-- FIXED PROFILE UPLOAD -->
+  <input type="file" onchange="uploadPic(this.files[0])">
+  <button onclick="uploadPic()">Update Profile Picture</button>
 </div>
 
 </div>
@@ -133,25 +164,33 @@ input[type="file"]{
 
 <script>
 
-/* LOAD (kept here for UI only) */
+/* LOAD FUNCTION (RESTORES EVERYTHING YOU LOST) */
 function load(){
-  posts.innerHTML = "";
+  posts.innerHTML="";
 
-  let all = [];
+  let all=[];
+
   for(let u in users){
     all.push(...users[u].posts);
   }
 
-  all.sort((a,b)=>b.id - a.id);
+  all.sort((a,b)=>b.id-a.id);
 
   all.forEach(p=>{
-    let div = document.createElement("div");
-    div.className = "post";
+    let owner = users[p.user];
+    if(!owner) return;
 
-    div.innerHTML = `
+    let div=document.createElement("div");
+    div.className="post";
+
+    div.innerHTML=`
       <span class="user" onclick="follow('${p.user}')">
         @${p.user}
       </span>
+
+      <button onclick="follow('${p.user}')">
+        ${owner.followers.includes(currentUser) ? "Unfollow" : "Follow"}
+      </button>
 
       <div>${p.text}</div>
 
@@ -159,10 +198,9 @@ function load(){
         ${p.time || ""}
       </div>
 
-      <div onclick="like(${p.id})">▲ ${p.likes || 0}</div>
+      <div onclick="like(${p.id})">▲ ${p.likes||0}</div>
 
-      ${p.user===currentUser ?
-        `<div class="delete" onclick="del(${p.id})">delete</div>` : ""}
+      ${p.user===currentUser ? `<div class="delete" onclick="del(${p.id})">delete</div>` : ""}
     `;
 
     posts.appendChild(div);
@@ -170,8 +208,9 @@ function load(){
 
   let me = users[currentUser];
 
-  name.innerText = "@" + currentUser;
-  followers.innerText = "Followers: " + me.followers.length;
+  rightPic.src = me.pic || "";
+  rightName.innerHTML = "<b>@"+currentUser+"</b>";
+  rightFollowers.innerText = "Followers: " + me.followers.length;
 }
 
 load();
@@ -183,20 +222,6 @@ function logout(){
 
 function goSettings(){
   location.href="settings.html";
-}
-
-/* PROFILE PIC */
-function upload(){
-  let file = fileInput.files[0];
-  if(!file) return;
-
-  let r = new FileReader();
-  r.onload = () => {
-    users[currentUser].pic = r.result;
-    save();
-    load();
-  };
-  r.readAsDataURL(file);
 }
 
 </script>
