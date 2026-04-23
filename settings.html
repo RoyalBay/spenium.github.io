@@ -2,98 +2,61 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>WUPHF Settings</title>
-
+<title>Settings</title>
 <link rel="icon" href="wicon.png">
 
 <style>
-
 body{
-  margin:0;
   font-family:Tahoma;
+  margin:0;
 }
 
-/* TOP BAR */
 .topbar{
   background:#3b5998;
   color:white;
-  height:44px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:0 12px;
+  padding:10px;
 }
 
-/* LOGO */
-.logo{
-  display:flex;
-  align-items:center;
-  gap:8px;
+.box{
+  width:300px;
+  margin:50px auto;
+  background:white;
+  border:1px solid #ccc;
+  padding:15px;
 }
 
-.logo img{
-  height:34px;
-}
-
-/* BLUE BUTTON STYLE RESTORED */
 button{
+  width:100%;
+  margin:5px 0;
+  padding:8px;
   background:#3b5998;
   color:white;
   border:none;
-  padding:6px 10px;
-  cursor:pointer;
-  font-weight:normal;
 }
-
-/* BACK BUTTON (NOW BLUE LIKE EVERYTHING ELSE) */
-.backBtn{
-  margin-left:auto;
-}
-
-/* SETTINGS BOX */
-.container{
-  max-width:600px;
-  margin:40px auto;
-  background:white;
-  padding:20px;
-  border:1px solid #ccc;
-}
-
 </style>
 </head>
 
 <body>
 
 <div class="topbar">
-
-  <div class="logo">
-    <img src="Facebook.jpg">
-    <b>WUPHF</b>
-  </div>
-
-  <!-- BACK BUTTON FIXED -->
-  <button class="backBtn" onclick="location.href='feed.html'">
-    Back
-  </button>
-
+  <button onclick="location.href='feed.html'">Back</button>
+  WUPHF Settings
 </div>
 
-<div class="container">
+<div class="box">
 
-  <h3>Themes</h3>
+<h3>Themes</h3>
 
-  <!-- ALL BLUE BUTTONS RESTORED -->
-  <button onclick="setTheme('light')">Light</button>
-  <button onclick="setTheme('dark')">Dark</button>
-  <button onclick="setTheme('dynamic')">Dynamic</button>
-
-  <p>More settings coming soon</p>
+<button onclick="setTheme('light')">Light</button>
+<button onclick="setTheme('dark')">Dark</button>
+<button onclick="setTheme('dynamic')">Dynamic</button>
 
 </div>
 
 <script>
 function setTheme(t){
-  localStorage.setItem("theme", t);
+  localStorage.setItem("theme",t);
+  alert("Theme set to "+t);
 }
 </script>
 
