@@ -24,7 +24,6 @@ body{
   color:white;
 }
 
-/* LOGO */
 .logo{
   display:flex;
   align-items:center;
@@ -35,26 +34,23 @@ body{
   height:34px;
 }
 
-/* HEADER TEXT FIX */
+/* HEADER */
 .title{
   text-align:center;
   margin-top:40px;
 }
 
 .title h1{
-  margin:0;
   font-weight:bold;
-  font-family:Tahoma;
+  margin:0;
 }
 
-/* SMALL SUBTEXT */
 .title p{
   margin-top:5px;
   font-weight:normal;
-  color:#444;
 }
 
-/* LOGIN BOX (UNCHANGED) */
+/* LOGIN BOX */
 .loginBox{
   width:300px;
   margin:80px auto;
@@ -84,7 +80,6 @@ button{
 #error{
   color:red;
   font-size:12px;
-  margin-top:5px;
   min-height:14px;
 }
 
@@ -100,13 +95,11 @@ button{
   </div>
 </div>
 
-<!-- ✅ FIXED HEADER TEXT (AS YOU SPECIFIED) -->
 <div class="title">
   <h1>just WUPHF it.</h1>
   <p>whenever. wherever.</p>
 </div>
 
-<!-- LOGIN BOX (UNCHANGED STRUCTURE) -->
 <div class="loginBox">
 
   <input id="username" placeholder="username">
@@ -137,7 +130,15 @@ function login(){
     return;
   }
 
+  /* CRITICAL FIX: ALWAYS SET STATE BEFORE REDIRECT */
   localStorage.setItem("currentUser", u);
+
+  /* SAFETY: ensure structure exists */
+  if(!users[u].followers) users[u].followers = [];
+  if(!users[u].posts) users[u].posts = [];
+
+  localStorage.setItem("users", JSON.stringify(users));
+
   location.href = "feed.html";
 }
 
@@ -151,10 +152,10 @@ function create(){
   }
 
   users[u] = {
-    password: p,
-    followers: [],
-    posts: [],
-    pic: ""
+    password:p,
+    followers:[],
+    posts:[],
+    pic:""
   };
 
   localStorage.setItem("users", JSON.stringify(users));
