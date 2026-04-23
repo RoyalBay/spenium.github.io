@@ -2,20 +2,19 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>WUPHF Feed</title>
+<title>WUPHF</title>
 
-<link rel="icon" type="image/png" href="wicon.png">
+<link rel="icon" href="wicon.png">
 
 <style>
 
-/* BODY */
 body{
   margin:0;
   font-family:Tahoma;
-  background:#f5f6f7;
+  transition:0.3s;
 }
 
-/* TOP BAR (RESTORED BLUE + BUTTON FIX) */
+/* TOP BAR */
 .topbar{
   background:#3b5998;
   color:white;
@@ -26,25 +25,8 @@ body{
   padding:0 12px;
 }
 
-/* LOGO */
-.logo{
-  display:flex;
-  align-items:center;
-  gap:8px;
-}
-
 .logo img{
-  height:30px;
-}
-
-/* BUTTON FIX (THIS WAS CAUSING GREY ISSUE) */
-button{
-  background:#3b5998;
-  color:white;
-  border:none;
-  padding:6px;
-  cursor:pointer;
-  font-weight:normal;
+  height:32px;
 }
 
 /* LAYOUT */
@@ -55,20 +37,20 @@ button{
   gap:10px;
 }
 
-/* PROFILE BOX */
+/* LEFT PROFILE POPUP */
 .profile{
   width:220px;
   background:white;
-  padding:10px;
   border:1px solid #ccc;
+  padding:10px;
 }
 
 /* FEED */
 .feed{
   flex:1;
   background:white;
-  padding:10px;
   border:1px solid #ccc;
+  padding:10px;
 }
 
 /* POST */
@@ -78,37 +60,32 @@ button{
   position:relative;
 }
 
-/* USERNAME (FIXED BOLD + CLICKABLE) */
+/* USERNAME LINK */
 .user{
   font-weight:bold;
   color:#3b5998;
   cursor:pointer;
 }
 
-/* DELETE POSITION FIX */
-.delete{
-  position:absolute;
-  right:6px;
-  bottom:6px;
-  color:red;
+/* VERIFIED */
+.verified{
+  color:#3b5998;
+}
+
+/* FILE INPUT FIX (SPACING ISSUE FIXED) */
+input[type="file"]{
+  display:block;
+  margin-top:12px;
+  margin-bottom:8px;
+}
+
+/* BUTTON STYLE */
+button{
+  background:#3b5998;
+  color:white;
+  border:none;
+  padding:6px;
   cursor:pointer;
-}
-
-/* PROFILE PIC */
-.profilePic{
-  width:70px;
-  height:70px;
-  object-fit:cover;
-  border-radius:5px;
-}
-
-/* TEXTAREA FIX */
-textarea{
-  width:100%;
-  height:60px;
-  resize:none;
-  box-sizing:border-box;
-  border:1px solid #ccc;
 }
 
 </style>
@@ -116,9 +93,7 @@ textarea{
 
 <body>
 
-<!-- TOP BAR -->
 <div class="topbar">
-
   <div class="logo">
     <img src="Facebook.jpg">
     <b>WUPHF</b>
@@ -128,14 +103,13 @@ textarea{
     <button onclick="goSettings()">Settings</button>
     <button onclick="logout()">Logout</button>
   </div>
-
 </div>
 
 <div class="container">
 
-<!-- LEFT PROFILE (CLICKED USER) -->
+<!-- LEFT PROFILE (OPENS ON CLICK) -->
 <div id="leftProfile" class="profile" style="display:none;">
-  <img id="leftPic" class="profilePic">
+  <img id="leftPic" width="80">
   <div id="leftName"></div>
   <div id="leftFollowers"></div>
 </div>
@@ -149,13 +123,15 @@ textarea{
 
 <!-- RIGHT PROFILE -->
 <div class="profile">
-  <img id="rightPic" class="profilePic">
+  <img id="rightPic" width="80">
   <div id="rightName"></div>
   <div id="rightFollowers"></div>
 
-  <!-- FIXED PROFILE UPLOAD -->
-  <input type="file" onchange="uploadPic(this.files[0])">
-  <button onclick="uploadPic()">Update Profile Picture</button>
+  <!-- FIXED SPACING -->
+  <input type="file" id="fileInput">
+  <button onclick="uploadPic(fileInput.files[0])">
+    Update Profile Picture
+  </button>
 </div>
 
 </div>
@@ -164,12 +140,22 @@ textarea{
 
 <script>
 
-/* LOAD FUNCTION (RESTORES EVERYTHING YOU LOST) */
+/* THEME FIX (dynamic now consistent) */
+function applyTheme(){
+  let t = localStorage.getItem("theme") || "light";
+
+  if(t==="light") document.body.style.background="#f5f6f7";
+  if(t==="dark") document.body.style.background="#2b2b2b";
+  if(t==="dynamic")
+    document.body.style.background="linear-gradient(#3b5998,#8b9dc3)";
+}
+applyTheme();
+
+/* LOAD */
 function load(){
   posts.innerHTML="";
 
   let all=[];
-
   for(let u in users){
     all.push(...users[u].posts);
   }
@@ -177,20 +163,13 @@ function load(){
   all.sort((a,b)=>b.id-a.id);
 
   all.forEach(p=>{
-    let owner = users[p.user];
-    if(!owner) return;
-
     let div=document.createElement("div");
     div.className="post";
 
     div.innerHTML=`
-      <span class="user" onclick="follow('${p.user}')">
-        @${p.user}
+      <span class="user" onclick="openProfile('${p.user}')">
+        @${p.user}${verified(p.user)}
       </span>
-
-      <button onclick="follow('${p.user}')">
-        ${owner.followers.includes(currentUser) ? "Unfollow" : "Follow"}
-      </button>
 
       <div>${p.text}</div>
 
@@ -200,7 +179,8 @@ function load(){
 
       <div onclick="like(${p.id})">▲ ${p.likes||0}</div>
 
-      ${p.user===currentUser ? `<div class="delete" onclick="del(${p.id})">delete</div>` : ""}
+      ${p.user===currentUser ?
+        `<div style="position:absolute;right:6px;bottom:6px;color:red;cursor:pointer;" onclick="del(${p.id})">delete</div>` : ""}
     `;
 
     posts.appendChild(div);
@@ -209,7 +189,7 @@ function load(){
   let me = users[currentUser];
 
   rightPic.src = me.pic || "";
-  rightName.innerHTML = "<b>@"+currentUser+"</b>";
+  rightName.innerHTML = "<b>@"+currentUser+"</b>" + verified(currentUser);
   rightFollowers.innerText = "Followers: " + me.followers.length;
 }
 
