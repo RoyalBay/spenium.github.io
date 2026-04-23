@@ -1,24 +1,13 @@
-let currentUser = localStorage.getItem("currentUser");
-let users = JSON.parse(localStorage.getItem("users") || "{}");
-
-function save(){
-  localStorage.setItem("users", JSON.stringify(users));
-}
-
-/* VERIFIED */
-function verified(u){
-  return (users[u]?.followers?.length || 0) >= 100 ? " ◆" : "";
-}
-
-/* FOLLOW */
+/* FOLLOW FIX (STATE ALWAYS SAVES + RELOADS UI) */
 function follow(user){
-  if(!users[user]) return;
+  if(!users[user] || !currentUser) return;
 
   users[user].followers ||= [];
 
-  if(users[user].followers.includes(currentUser)){
-    users[user].followers =
-      users[user].followers.filter(x => x !== currentUser);
+  let list = users[user].followers;
+
+  if(list.includes(currentUser)){
+    users[user].followers = list.filter(x => x !== currentUser);
   } else {
     users[user].followers.push(currentUser);
   }
@@ -27,76 +16,70 @@ function follow(user){
   render();
 }
 
-/* PROFILE OPEN */
-function openProfile(user){
-  let u = users[user];
-  if(!u) return;
+/* THEME FIX (DYNAMIC NOW ACTUALLY APPLIES CONSISTENTLY) */
+function applyTheme(){
+  let t = localStorage.getItem("theme") || "light";
 
-  leftProfile.style.display = "block";
-  leftPic.src = u.pic || "";
-  leftName.innerHTML = "<b>@"+user+"</b>" + verified(user);
-  leftFollowers.innerText = "Followers: " + u.followers.length;
-}
-
-/* POST */
-function post(){
-  if(!text.value.trim()) return;
-
-  users[currentUser].posts.unshift({
-    id: Date.now(),
-    user: currentUser,
-    text: text.value,
-    time: new Date().toLocaleString(),
-    likes: 0,
-    likedBy: []
-  });
-
-  save();
-  text.value = "";
-  render();
-}
-
-/* LIKE */
-function like(id){
-  for(let u in users){
-    for(let p of users[u].posts){
-      if(p.id === id){
-
-        p.likedBy ||= [];
-
-        if(p.likedBy.includes(currentUser)){
-          p.likedBy = p.likedBy.filter(x => x !== currentUser);
-        } else {
-          p.likedBy.push(currentUser);
-        }
-
-        p.likes = p.likedBy.length;
-      }
-    }
+  if(t === "light"){
+    document.body.style.background = "#f5f6f7";
   }
 
-  save();
-  render();
+  if(t === "dark"){
+    document.body.style.background = "#2b2b2b";
+  }
+
+  if(t === "dynamic"){
+    document.body.style.background =
+      "linear-gradient(#3b5998,#8b9dc3)";
+  }
 }
 
-/* DELETE */
-function del(id){
-  users[currentUser].posts =
-    users[currentUser].posts.filter(p => p.id !== id);
+/* IMPORTANT: force theme on every render */
+function render(){
+  applyTheme();
 
-  save();
-  render();
-}
+  posts.innerHTML = "";
 
-/* PROFILE PIC */
-function uploadPic(file){
-  if(!file) return;
+  let all = [];
+  for(let u in users){
+    all.push(...users[u].posts);
+  }
 
-  let r = new FileReader();
-  r.onload = () => {
-    users[currentUser].pic = r.result;
-    save();
-    render();
-  };
-  r.readAsDataURL(file);
+  all.sort((a,b)=>b.id-a.id);
+
+  all.forEach(p=>{
+    let owner = users[p.user];
+    if(!owner) return;
+
+    let div = document.createElement("div");
+    div.className = "post";
+
+    div.innerHTML = `
+      <span class="user" onclick="openProfile('${p.user}')">
+        @${p.user}
+      </span>
+
+      <button onclick="follow('${p.user}')">
+        ${owner.followers.includes(currentUser) ? "Unfollow" : "Follow"}
+      </button>
+
+      <div>${p.text}</div>
+
+      <div style="font-size:11px;color:gray;">
+        ${p.time || ""}
+      </div>
+
+      <div onclick="like(${p.id})">▲ ${p.likes || 0}</div>
+
+      ${p.user===currentUser ?
+        `<div class="delete" onclick="del(${p.id})">delete</div>` : ""}
+    `;
+    posts.appendChild(div);
+  });
+
+  let me = users[currentUser];
+
+  rightPic.src = me.pic || "";
+  rightName.innerHTML = "<b>@"+currentUser+"</b>";
+  rightFollowers.innerText = "Followers: " + me.followers.length;
 }
