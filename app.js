@@ -1,4 +1,5 @@
-/* FOLLOW FIX (STATE ALWAYS SAVES + RELOADS UI) */
+
+/* FOLLOW FIX (FORCE STATE UPDATE + UI REFRESH) */
 function follow(user){
   if(!users[user] || !currentUser) return;
 
@@ -16,25 +17,28 @@ function follow(user){
   render();
 }
 
-/* THEME FIX (DYNAMIC NOW ACTUALLY APPLIES CONSISTENTLY) */
+/* THEME FIX (FORCE APPLY EVERY TIME PAGE RENDERS) */
 function applyTheme(){
   let t = localStorage.getItem("theme") || "light";
 
   if(t === "light"){
     document.body.style.background = "#f5f6f7";
+    document.body.style.color = "black";
   }
 
   if(t === "dark"){
     document.body.style.background = "#2b2b2b";
+    document.body.style.color = "white";
   }
 
   if(t === "dynamic"){
     document.body.style.background =
       "linear-gradient(#3b5998,#8b9dc3)";
+    document.body.style.color = "black";
   }
 }
 
-/* IMPORTANT: force theme on every render */
+/* IMPORTANT: ALWAYS APPLY THEME INSIDE RENDER */
 function render(){
   applyTheme();
 
@@ -74,6 +78,7 @@ function render(){
       ${p.user===currentUser ?
         `<div class="delete" onclick="del(${p.id})">delete</div>` : ""}
     `;
+
     posts.appendChild(div);
   });
 
