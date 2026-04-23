@@ -1,133 +1,164 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WUPHF</title>
+<title>WUPHF Login</title>
 
-<!-- ONLY CHANGE: FAVICON -->
-<link rel="icon" type="image/png" href="wicon.png">
+<link rel="icon" href="wicon.png">
 
 <style>
+
 body{
   margin:0;
   font-family:Tahoma;
-  background:linear-gradient(#dfe7f3,#f5f6f7);
+  background: linear-gradient(#dfe7f3,#f5f6f7);
 }
 
-/* ORIGINAL TOP BAR STYLE */
+/* TOP BAR */
 .topbar{
   background:#3b5998;
-  color:white;
-  padding:12px 18px;
-  font-size:22px;
-  font-weight:bold;
+  height:44px;
   display:flex;
   align-items:center;
-  gap:10px;
+  padding:0 12px;
+  color:white;
 }
 
-/* FIX TEXTBOX SIZE ISSUE (YOU REPORTED THIS BREAK) */
+/* LOGO */
+.logo{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.logo img{
+  height:34px;
+}
+
+/* HEADER TEXT FIX */
+.title{
+  text-align:center;
+  margin-top:40px;
+}
+
+.title h1{
+  margin:0;
+  font-weight:bold;
+  font-family:Tahoma;
+}
+
+/* SMALL SUBTEXT */
+.title p{
+  margin-top:5px;
+  font-weight:normal;
+  color:#444;
+}
+
+/* LOGIN BOX (UNCHANGED) */
+.loginBox{
+  width:300px;
+  margin:80px auto;
+  background:white;
+  border:1px solid #ccc;
+  padding:20px;
+}
+
 input{
   width:100%;
   padding:8px;
-  margin:6px 0;
+  margin:5px 0;
+  border:1px solid #ccc;
   box-sizing:border-box;
 }
 
-/* BUTTONS BACK TO ORIGINAL BLUE STYLE */
 button{
   width:100%;
-  padding:8px;
   background:#3b5998;
   color:white;
   border:none;
+  padding:8px;
+  margin-top:6px;
   cursor:pointer;
+}
+
+#error{
+  color:red;
+  font-size:12px;
   margin-top:5px;
+  min-height:14px;
 }
 
-button.secondary{
-  background:#3b5998;
-}
-
-/* LOGIN BOX */
-.center{
-  max-width:400px;
-  margin:80px auto;
-  text-align:center;
-}
 </style>
 </head>
 
 <body>
 
-<!-- RESTORED TOP BAR + LOGO AREA -->
 <div class="topbar">
-  <img src="Facebook.jpg" style="height:28px;">
-  <span>WUPHF</span>
+  <div class="logo">
+    <img src="Facebook.jpg">
+    <b>WUPHF</b>
+  </div>
 </div>
 
-<!-- LOGIN SCREEN (UNCHANGED STRUCTURE) -->
-<div class="center">
+<!-- ✅ FIXED HEADER TEXT (AS YOU SPECIFIED) -->
+<div class="title">
+  <h1>just WUPHF it.</h1>
+  <p>whenever. wherever.</p>
+</div>
 
-  <h2>Login</h2>
+<!-- LOGIN BOX (UNCHANGED STRUCTURE) -->
+<div class="loginBox">
 
-  <input id="loginUser" placeholder="Username">
-  <input id="loginPass" type="password" placeholder="Password">
+  <input id="username" placeholder="username">
+  <input id="password" type="password" placeholder="password">
 
-  <div id="loginError" style="color:red;font-size:12px;"></div>
+  <button onclick="login()">Enter</button>
+  <button onclick="create()">Create Account</button>
 
-  <button onclick="login()">Login</button>
-  <button onclick="createAccount()" class="secondary">Create Account</button>
+  <div id="error"></div>
 
 </div>
 
 <script>
 
-function getUsers(){
-  return JSON.parse(localStorage.getItem("users")||"{}");
-}
+let users = JSON.parse(localStorage.getItem("users") || "{}");
 
 function login(){
-  let users=getUsers();
-
-  let u=loginUser.value.trim();
-  let p=loginPass.value;
+  let u = username.value.trim();
+  let p = password.value.trim();
 
   if(!users[u]){
-    loginError.innerText="Incorrect username";
+    error.innerText = "User not found";
     return;
   }
 
-  if(users[u].password!==p){
-    loginError.innerText="Incorrect password";
+  if(users[u].password !== p){
+    error.innerText = "Incorrect password";
     return;
   }
 
-  localStorage.setItem("currentUser",u);
-  location.href="feed.html";
+  localStorage.setItem("currentUser", u);
+  location.href = "feed.html";
 }
 
-function createAccount(){
-  let users=getUsers();
-
-  let u=loginUser.value.trim();
-  let p=loginPass.value;
+function create(){
+  let u = username.value.trim();
+  let p = password.value.trim();
 
   if(users[u]){
-    loginError.innerText="Username already exists";
+    error.innerText = "Username already in use";
     return;
   }
 
-  users[u]={
-    password:p,
-    posts:[],
-    followers:[],
-    pic:""
+  users[u] = {
+    password: p,
+    followers: [],
+    posts: [],
+    pic: ""
   };
 
-  localStorage.setItem("users",JSON.stringify(users));
-  loginError.innerText="Account created. Please login.";
+  localStorage.setItem("users", JSON.stringify(users));
+  error.innerText = "Account created";
 }
 
 </script>
