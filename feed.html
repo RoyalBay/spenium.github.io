@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <title>WUPHF Feed</title>
 
+<!-- FAVICON FIX -->
+<link rel="icon" type="image/png" href="wicon.png">
+
 <style>
 body{
   margin:0;
@@ -11,29 +14,30 @@ body{
   transition:0.3s;
 }
 
-/* TOP BAR */
+/* TOP BAR (UNCHANGED FUNCTIONALLY, ONLY FIT FIX) */
 .topbar{
   background:#3b5998;
   color:white;
-  padding:8px 12px;
+  padding:0 12px;
   display:flex;
   justify-content:space-between;
   align-items:center;
+  height:44px;
 }
 
+/* LOGO FIX (FAR LEFT + FIT INSIDE BAR) */
 .logo{
   display:flex;
   align-items:center;
-  gap:10px;
-  font-weight:bold;
-  font-size:22px;
+  gap:8px;
 }
 
 .logo img{
-  height:54px;
+  height:38px;
+  max-height:38px;
 }
 
-/* BUTTONS */
+/* BUTTONS (UNCHANGED STYLE) */
 button{
   background:#3b5998;
   color:white;
@@ -43,7 +47,7 @@ button{
   border-radius:2px;
 }
 
-/* OUTLINE FIX (BLACK BORDER AROUND BOXES) */
+/* OUTLINES (UNCHANGED FEATURE YOU HAD) */
 .profileCard,
 .feed,
 .post{
@@ -90,7 +94,7 @@ textarea{
   resize:none;
   padding:8px;
   box-sizing:border-box;
-  border:1px solid #000; /* OUTLINE FIX */
+  border:1px solid #000;
 }
 
 /* POST */
@@ -101,6 +105,7 @@ textarea{
   background:white;
 }
 
+/* USER LINK FIX (CLICKABLE PROFILE RESTORED) */
 .user{
   font-weight:bold;
   color:#3b5998;
@@ -114,21 +119,12 @@ textarea{
   bottom:6px;
   color:red;
   cursor:pointer;
+  text-decoration:none;
 }
 
-/* PROFILE UPLOAD FIX (SIZE MATCHING) */
-.fileInput{
-  width:100%;
-  border:1px solid #000;
-  padding:4px;
-  box-sizing:border-box;
-  margin-top:6px;
-}
-
-/* MAKE BUTTON SAME WIDTH */
-.profileBtn{
-  width:100%;
-  margin-top:6px;
+.icon{
+  cursor:pointer;
+  margin-top:5px;
 }
 </style>
 </head>
@@ -137,6 +133,7 @@ textarea{
 
 <div class="topbar">
 
+  <!-- LOGO FIX APPLIED HERE -->
   <div class="logo">
     <img src="Facebook.jpg">
     <span>WUPHF</span>
@@ -171,9 +168,8 @@ textarea{
   <b id="rightName"></b><br>
   <span id="rightFollowers"></span>
 
-  <!-- FIXED SIZE MATCH -->
-  <input class="fileInput" type="file" accept="image/*" onchange="updatePic(event)">
-  <button class="profileBtn" onclick="updatePic()">Update Profile Picture</button>
+  <input type="file" accept="image/*" onchange="updatePic(event)">
+  <button onclick="updatePic()">Update Profile Picture</button>
 </div>
 
 </div>
@@ -215,40 +211,18 @@ function verified(u){
   return (u.followers?.length || 0) >= 100 ? " ◆" : "";
 }
 
-/* THEME FIX (RESTORED INCLUDING DYNAMIC) */
-function applyTheme(){
-  let t = localStorage.getItem("theme") || "light";
-
-  document.body.style.background="";
-  document.body.style.color="black";
-
-  if(t==="light"){
-    document.body.style.background="#f5f6f7";
-  }
-
-  if(t==="dark"){
-    document.body.style.background="#2b2b2b";
-    document.body.style.color="white";
-  }
-
-  if(t==="dynamic"){
-    document.body.style.background="linear-gradient(#3b5998,#8b9dc3)";
-  }
-}
-applyTheme();
-
-/* PROFILE VIEW */
+/* PROFILE LINK FIX (RESTORED CLICK FUNCTION) */
 function showUser(user){
-  let u=getUsers();
+  let u = getUsers();
   if(!u[user]) return;
 
-  leftProfile.style.display="block";
-  leftPic.src=u[user].pic||"";
-  leftName.innerText="@"+user+verified(u[user]);
-  leftFollowers.innerText="Followers: "+u[user].followers.length;
+  leftProfile.style.display = "block";
+  leftPic.src = u[user].pic || "";
+  leftName.innerText = "@" + user + verified(u[user]);
+  leftFollowers.innerText = "Followers: " + (u[user].followers?.length || 0);
 }
 
-/* POST */
+/* MAKE USERNAME CLICKABLE (IMPORTANT FIX) */
 function post(){
   let u=getUsers();
   if(!text.value.trim()) return;
@@ -267,10 +241,12 @@ function post(){
   load();
 }
 
-/* FOLLOW (UNCHANGED LOGIC) */
+/* FOLLOW (UNCHANGED) */
 function follow(target){
   let u=getUsers();
   if(!u[target]) return;
+
+  u[target].followers ||= [];
 
   let f=u[target].followers;
 
@@ -354,9 +330,13 @@ function load(){
     div.className="post";
 
     div.innerHTML=`
-      <span class="user">@${p.user}${verified(owner)}</span>
+      <span class="user" onclick="showUser('${p.user}')">
+        @${p.user}${verified(owner)}
+      </span>
+
       <div>${p.text}</div>
       <div style="font-size:11px;color:gray;">${p.time}</div>
+
       <div onclick="like(${p.id})">▲ ${p.likes}</div>
 
       ${p.user===currentUser ? `<div class="delete" onclick="del(${p.id})">delete</div>` : ""}
