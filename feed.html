@@ -50,7 +50,7 @@ body{
   padding:10px;
 }
 
-/* PROFILE */
+/* RIGHT PROFILE (REFERENCE SIZE) */
 .profile{
   width:220px;
   background:white;
@@ -72,7 +72,7 @@ body{
   color:#3b5998;
 }
 
-/* DELETE BUTTON */
+/* DELETE */
 .delete{
   position:absolute;
   bottom:5px;
@@ -100,16 +100,22 @@ button{
   cursor:pointer;
 }
 
-/* LEFT POPUP PROFILE (UPDATED SIZE ONLY) */
+/* LEFT POPUP PROFILE (NOW MATCHES RIGHT PROFILE SIZE) */
 #popup{
   display:none;
   position:fixed;
   left:10px;
   top:80px;
-  width:220px;   /* MATCH RIGHT PROFILE */
+  width:220px;     /* MATCH RIGHT PROFILE */
   background:white;
   border:1px solid #ccc;
   padding:10px;
+  box-sizing:border-box;
+}
+
+/* POPUP USERNAME BOLD FIX */
+#pname{
+  font-weight:bold;
 }
 
 </style>
@@ -118,6 +124,7 @@ button{
 <body>
 
 <div class="topbar">
+
   <div class="left">
     <img src="Facebook.jpg">
     <b>WUPHF</b>
@@ -127,13 +134,18 @@ button{
     <button onclick="location.href='settings.html'">Settings</button>
     <button onclick="location.href='index.html'">Logout</button>
   </div>
+
 </div>
 
-<!-- POPUP PROFILE -->
+<!-- LEFT POPUP PROFILE -->
 <div id="popup">
+
   <img id="ppic" width="60">
-  <div id="pname"></div>
+  
+  <div id="pname"></div>   <!-- NOW BOLD VIA CSS -->
+  
   <div id="pfollow"></div>
+
 </div>
 
 <div class="container">
@@ -147,8 +159,7 @@ button{
   <div class="profile">
 
     <img id="rightPic" width="70" height="70" style="object-fit:cover;">
-    
-    <!-- BOLD USERNAME FIX -->
+
     <div id="rightName" style="font-weight:bold;"></div>
 
     <div id="rightFollowers"></div>
