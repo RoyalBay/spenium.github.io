@@ -2,74 +2,59 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Settings</title>
+<title>WUPHF Settings</title>
+
+<link rel="icon" href="wicon.png">
 
 <style>
+
 body{
   margin:0;
   font-family:Tahoma;
-  transition:0.3s;
 }
 
-/* TOP BAR */
+/* TOP BAR (MATCH FEED SIZE EXACTLY) */
 .topbar{
   background:#3b5998;
   color:white;
-  padding:8px 12px;
+  height:44px;
   display:flex;
-  justify-content:space-between;
   align-items:center;
+  justify-content:space-between;
+  padding:0 12px;
 }
 
-/* LOGO */
+/* LOGO (MATCH FEED) */
 .logo{
   display:flex;
   align-items:center;
-  gap:10px;
-  font-weight:bold;
-  font-size:22px;
+  gap:8px;
 }
 
 .logo img{
-  height:54px;
+  height:34px;
 }
 
-/* BACK LEFT FIX (IMPORTANT) */
+/* SETTINGS BOX */
+.container{
+  max-width:600px;
+  margin:40px auto;
+  background:white;
+  padding:20px;
+  border:1px solid #ccc;
+}
+
+/* BACK BUTTON FIX (FAR RIGHT) */
 .backBtn{
   margin-left:auto;
-}
-
-/* CARD */
-.card{
-  max-width:500px;
-  margin:40px auto;
-  padding:15px;
-  border-radius:6px;
   background:white;
-  transition:0.3s;
-}
-
-/* BUTTONS */
-button{
-  background:#3b5998;
-  color:white;
+  color:#3b5998;
   border:none;
-  padding:8px;
-  width:100%;
-  margin-top:6px;
+  padding:6px 10px;
   cursor:pointer;
+  font-weight:bold;
 }
 
-/* DARK MODE FIX (FULL UI) */
-body.dark{
-  background:#1c1c1c;
-  color:#e5e5e5;
-}
-
-body.dark .card{
-  background:#2a2a2a;
-  color:#e5e5e5;
-}
 </style>
 </head>
 
@@ -79,14 +64,19 @@ body.dark .card{
 
   <div class="logo">
     <img src="Facebook.jpg">
-    <span>WUPHF</span>
+    <b>WUPHF</b>
   </div>
 
-  <button class="backBtn" onclick="back()">Back</button>
+  <!-- MUST STAY FAR RIGHT -->
+  <button class="backBtn" onclick="location.href='feed.html'">
+    Back
+  </button>
 
 </div>
 
-<div class="card">
+<div class="container">
+
+  <!-- ORIGINAL CONTENT KEPT -->
   <h3>Themes</h3>
 
   <button onclick="setTheme('light')">Light</button>
@@ -94,37 +84,13 @@ body.dark .card{
   <button onclick="setTheme('dynamic')">Dynamic</button>
 
   <p>More settings coming soon</p>
+
 </div>
 
 <script>
-
 function setTheme(t){
-  localStorage.setItem("theme",t);
-  applyTheme();
+  localStorage.setItem("theme", t);
 }
-
-function applyTheme(){
-  let t = localStorage.getItem("theme") || "light";
-
-  document.body.classList.remove("dark");
-
-  if(t==="dark"){
-    document.body.classList.add("dark");
-  }
-
-  if(t==="dynamic"){
-    document.body.style.background="linear-gradient(#3b5998,#8b9dc3)";
-  } else if(t!=="dynamic"){
-    document.body.style.background="";
-  }
-}
-
-function back(){
-  location.href="feed.html";
-}
-
-applyTheme();
-
 </script>
 
 </body>
