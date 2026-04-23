@@ -10,20 +10,32 @@
 body{
   margin:0;
   font-family:Tahoma;
+  background:linear-gradient(#dfe7f3,#f5f6f7);
 }
 
 /* TOP BAR */
 .topbar{
   background:#3b5998;
   color:white;
-  padding:8px;
+  height:44px;
   display:flex;
-  justify-content:space-between;
   align-items:center;
-  font-weight:bold;
+  justify-content:space-between;
+  padding:0 12px;
 }
 
-/* BUTTONS */
+/* LOGO */
+.logo{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.logo img{
+  height:30px;
+}
+
+/* BUTTON STYLE (RESTORED BLUE STYLE) */
 button{
   background:#3b5998;
   color:white;
@@ -34,25 +46,27 @@ button{
 
 /* LAYOUT */
 .container{
-  display:flex;
   max-width:1100px;
   margin:20px auto;
+  display:flex;
   gap:10px;
 }
 
+/* LEFT PROFILE (POPUP STYLE RESTORED) */
+.leftProfile,
+.rightProfile{
+  width:220px;
+  background:white;
+  padding:10px;
+  border:1px solid #ccc;
+}
+
+/* FEED */
 .feed{
   flex:1;
   background:white;
   padding:10px;
-  border:1px solid #000;
-}
-
-.profile{
-  width:220px;
-  background:white;
-  padding:10px;
-  border:1px solid #000;
-  text-align:center;
+  border:1px solid #ccc;
 }
 
 /* POST */
@@ -62,82 +76,120 @@ button{
   position:relative;
 }
 
-/* USER */
+/* USER NAME */
 .user{
   font-weight:bold;
   color:#3b5998;
   cursor:pointer;
 }
 
+/* FOLLOW BUTTON BESIDE NAME */
+.followBtn{
+  margin-left:8px;
+  font-size:11px;
+}
+
 /* DELETE */
 .delete{
   position:absolute;
-  right:5px;
-  bottom:5px;
+  right:6px;
+  bottom:6px;
   color:red;
   cursor:pointer;
 }
 
-/* FILE FIX */
-input[type="file"]{
-  width:100%;
-  border:1px solid #000;
-  padding:4px;
+/* PROFILE IMAGE */
+.profilePic{
+  width:70px;
+  height:70px;
+  object-fit:cover;
+  border-radius:5px;
 }
 
-.profileBtn{
+/* TEXTAREA FIX (NO RESIZE BUG) */
+textarea{
   width:100%;
-  margin-top:6px;
+  height:60px;
+  resize:none;
 }
 </style>
 </head>
 
 <body>
 
+<!-- TOP BAR WITH LOGO RESTORED -->
 <div class="topbar">
-  <div style="font-weight:bold;">WUPHF</div>
+
+  <div class="logo">
+    <img src="Facebook.jpg">
+    <b>WUPHF</b>
+  </div>
+
   <div>
     <button onclick="goSettings()">Settings</button>
     <button onclick="logout()">Logout</button>
   </div>
+
 </div>
 
 <div class="container">
 
-<div class="profile">
-  <img id="pic" width="80">
-  <div id="name"></div>
-  <div id="followers"></div>
-
-  <input type="file" onchange="upload(event)">
-  <button class="profileBtn" onclick="upload()">Update Profile Picture</button>
+<!-- LEFT PROFILE (CLICKED USER) -->
+<div id="leftProfile" class="leftProfile" style="display:none;">
+  <img id="leftPic" class="profilePic">
+  <div id="leftName"></div>
+  <div id="leftFollowers"></div>
 </div>
 
+<!-- FEED -->
 <div class="feed">
-  <textarea id="text" style="width:100%;height:60px;"></textarea>
+  <textarea id="text"></textarea>
   <button onclick="post()">Post</button>
   <div id="posts"></div>
+</div>
+
+<!-- RIGHT PROFILE (CURRENT USER) -->
+<div class="rightProfile">
+  <img id="rightPic" class="profilePic">
+  <div id="rightName"></div>
+  <div id="rightFollowers"></div>
 </div>
 
 </div>
 
 <script>
 
-let currentUser=localStorage.getItem("currentUser");
-let users=JSON.parse(localStorage.getItem("users")||"{}");
+let currentUser = localStorage.getItem("currentUser");
+let users = JSON.parse(localStorage.getItem("users")||"{}");
 
 function save(){
   localStorage.setItem("users",JSON.stringify(users));
 }
 
-/* FOLLOW FIX */
+/* VERIFIED DIAMOND RESTORED */
+function verified(u){
+  return (u.followers?.length || 0) >= 100 ? " ◆" : "";
+}
+
+/* PROFILE OPEN RESTORED */
+function showUser(u){
+  let data = users[u];
+  if(!data) return;
+
+  leftProfile.style.display="block";
+  leftPic.src=data.pic||"";
+  leftName.innerHTML="@"+u+verified(data);
+  leftFollowers.innerText="Followers: "+data.followers.length;
+}
+
+/* FOLLOW / UNFOLLOW RESTORED */
 function follow(u){
   if(!users[u]) return;
 
-  let f=users[u].followers;
+  let f = users[u].followers;
 
   if(f.includes(currentUser)){
-    users[u].followers=f.filter(x=>x!==currentUser);
+    users[u].followers = f.filter(x=>x!==currentUser);
   } else {
     f.push(currentUser);
   }
@@ -167,24 +219,37 @@ function like(id){
     for(let p of users[u].posts){
       if(p.id===id){
         p.likedBy ||= [];
+
         if(p.likedBy.includes(currentUser)){
-          p.likedBy=p.likedBy.filter(x=>x!==currentUser);
+          p.likedBy = p.likedBy.filter(x=>x!==currentUser);
         } else {
           p.likedBy.push(currentUser);
         }
-        p.likes=p.likedBy.length;
+
+        p.likes = p.likedBy.length;
       }
     }
   }
+
   save();
   load();
 }
 
-/* LOAD */
+/* DELETE */
+function del(id){
+  users[currentUser].posts =
+    users[currentUser].posts.filter(p=>p.id!==id);
+
+  save();
+  load();
+}
+
+/* LOAD FEED (FULL RESTORE) */
 function load(){
   posts.innerHTML="";
 
   let all=[];
+
   for(let u in users){
     all.push(...users[u].posts);
   }
@@ -192,28 +257,39 @@ function load(){
   all.sort((a,b)=>b.id-a.id);
 
   all.forEach(p=>{
+    let owner = users[p.user];
+    if(!owner) return;
+
     let div=document.createElement("div");
     div.className="post";
 
     div.innerHTML=`
-      <span class="user" onclick="follow('${p.user}')">
-        @${p.user}
+      <span class="user" onclick="showUser('${p.user}')">
+        @${p.user}${verified(owner)}
       </span>
+
+      <button class="followBtn" onclick="follow('${p.user}')">
+        ${owner.followers.includes(currentUser) ? "Unfollow" : "Follow"}
+      </button>
 
       <div>${p.text}</div>
 
       <div onclick="like(${p.id})">▲ ${p.likes||0}</div>
+
+      ${p.user===currentUser ? `<div class="delete" onclick="del(${p.id})">delete</div>` : ""}
     `;
 
     posts.appendChild(div);
   });
 
-  name.innerText=currentUser;
-  followers.innerText="Followers: "+(users[currentUser].followers.length||0);
+  let me = users[currentUser];
+
+  rightPic.src = me.pic || "";
+  rightName.innerHTML = "@"+currentUser;
+  rightFollowers.innerText = "Followers: "+me.followers.length;
 }
 
-load();
-
+/* NAV */
 function logout(){
   localStorage.removeItem("currentUser");
   location.href="index.html";
@@ -223,18 +299,7 @@ function goSettings(){
   location.href="settings.html";
 }
 
-function upload(e){
-  let file=e?.target?.files?.[0];
-  if(!file) return;
-
-  let r=new FileReader();
-  r.onload=()=>{
-    users[currentUser].pic=r.result;
-    save();
-    load();
-  };
-  r.readAsDataURL(file);
-}
+load();
 
 </script>
 
