@@ -5,28 +5,29 @@ function save(){
   localStorage.setItem("users", JSON.stringify(users));
 }
 
-/* VERIFIED BADGE (RESTORED) */
+/* VERIFIED */
 function verified(u){
   return (users[u]?.followers?.length || 0) >= 100 ? " ◆" : "";
 }
 
-/* FOLLOW (unchanged core) */
+/* FOLLOW */
 function follow(user){
   if(!users[user]) return;
 
   users[user].followers ||= [];
 
   if(users[user].followers.includes(currentUser)){
-    users[user].followers = users[user].followers.filter(x => x !== currentUser);
+    users[user].followers =
+      users[user].followers.filter(x => x !== currentUser);
   } else {
     users[user].followers.push(currentUser);
   }
 
   save();
-  load();
+  render();
 }
 
-/* CLICK PROFILE → LEFT PANEL (FIXED BEHAVIOR) */
+/* PROFILE OPEN */
 function openProfile(user){
   let u = users[user];
   if(!u) return;
@@ -52,7 +53,7 @@ function post(){
 
   save();
   text.value = "";
-  load();
+  render();
 }
 
 /* LIKE */
@@ -75,7 +76,7 @@ function like(id){
   }
 
   save();
-  load();
+  render();
 }
 
 /* DELETE */
@@ -84,7 +85,7 @@ function del(id){
     users[currentUser].posts.filter(p => p.id !== id);
 
   save();
-  load();
+  render();
 }
 
 /* PROFILE PIC */
@@ -95,7 +96,7 @@ function uploadPic(file){
   r.onload = () => {
     users[currentUser].pic = r.result;
     save();
-    load();
+    render();
   };
   r.readAsDataURL(file);
 }
