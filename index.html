@@ -2,16 +2,19 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>WUPHF</title>
+<title>WUPHF Login</title>
+
 <link rel="icon" href="wicon.png">
 
 <style>
+
 body{
   margin:0;
   font-family:Tahoma;
   background:linear-gradient(#dfe7f3,#f5f6f7);
 }
 
+/* TOP BAR */
 .topbar{
   height:44px;
   background:#3b5998;
@@ -21,86 +24,127 @@ body{
   padding:0 10px;
 }
 
-.loginBox{
-  width:300px;
-  margin:80px auto;
-  background:white;
-  border:1px solid #ccc;
-  padding:20px;
+/* TITLE SECTION */
+.title{
+  text-align:center;
+  margin-top:40px;
 }
 
-input{
+.title h1{
+  font-weight:bold;
+  margin:0;
+}
+
+.title p{
+  margin:0;
+  color:#555;
+}
+
+/* LOGIN BOX */
+.box{
+  width:300px;
+  margin:60px auto;
+  background:white;
+  padding:20px;
+  border:1px solid #ccc;
+}
+
+/* INPUTS */
+input,button{
   width:100%;
   padding:8px;
-  margin:5px 0;
+  margin-top:5px;
   box-sizing:border-box;
 }
 
 button{
-  width:100%;
-  padding:8px;
-  margin-top:5px;
   background:#3b5998;
   color:white;
   border:none;
   cursor:pointer;
 }
 
-.title{
-  text-align:center;
-  margin-top:40px;
+#error{
+  color:red;
+  font-size:13px;
 }
 
-.title h1{ font-weight:bold; margin:0; }
-.title p{ margin:0; color:#555; }
 </style>
 </head>
 
 <body>
 
-<div class="topbar"><b>WUPHF</b></div>
+<!-- TOP BAR WITH LOGO ADDED -->
+<div class="topbar">
+  <div style="display:flex;align-items:center;gap:8px;">
+    <img src="Facebook.jpg" style="height:34px;width:auto;">
+    <b>WUPHF</b>
+  </div>
+</div>
 
+<!-- LOGIN HEADER (UNCHANGED) -->
 <div class="title">
   <h1>just WUPHF it.</h1>
   <p>whenever. wherever.</p>
 </div>
 
-<div class="loginBox">
+<!-- LOGIN BOX (UNCHANGED) -->
+<div class="box">
 
-<input id="username" placeholder="username">
-<input id="password" type="password" placeholder="password">
+  <input id="username" placeholder="username">
+  <input id="password" type="password" placeholder="password">
 
-<button onclick="login()">Login</button>
-<button onclick="create()">Create Account</button>
+  <button onclick="login()">Login</button>
+  <button onclick="create()">Create Account</button>
 
-<div id="error"></div>
+  <div id="error"></div>
 
 </div>
 
 <script>
-let users = JSON.parse(localStorage.getItem("users")||"{}");
 
+let users = JSON.parse(localStorage.getItem("users") || "{}");
+
+/* LOGIN */
 function login(){
-  let u=username.value;
-  let p=password.value;
+  let u = username.value.trim();
+  let p = password.value.trim();
 
-  if(!users[u]) return error.innerText="User not found";
-  if(users[u].password!==p) return error.innerText="Wrong password";
+  if(!users[u]){
+    error.innerText = "User not found";
+    return;
+  }
 
-  localStorage.setItem("currentUser",u);
-  location.href="feed.html";
+  if(users[u].password !== p){
+    error.innerText = "Incorrect password";
+    return;
+  }
+
+  localStorage.setItem("currentUser", u);
+  location.href = "feed.html";
 }
 
+/* CREATE ACCOUNT */
 function create(){
-  let u=username.value;
-  let p=password.value;
+  let u = username.value.trim();
+  let p = password.value.trim();
 
-  if(users[u]) return error.innerText="Username exists";
+  if(users[u]){
+    error.innerText = "Username already in use";
+    return;
+  }
 
-  users[u]={password:p,followers:[],posts:[],pic:""};
-  localStorage.setItem("users",JSON.stringify(users));
-  error.innerText="Account created";
+  users[u] = {
+    password: p,
+    followers: [],
+    posts: [],
+    pic: ""
+  };
+
+  localStorage.setItem("users", JSON.stringify(users));
+  error.innerText = "Account created";
 }
+
 </script>
 
 </body>
